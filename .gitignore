@@ -1,0 +1,19 @@
+### Don't account for the accidentally compiled python
+*.pyc
+__pycache__
+host/__pycache__
+tests/__pycache__
+*.log
+
+### Don't account for this docs
+./doc/*.blg
+./doc/*.bbl
+./doc/*-blx.bib
+./doc/*.out
+./doc/*.aux
+./doc/*.toc
+./doc/*.run.xml
+./doc/*.fls
+./doc/*.log
+./doc/*.fdb_latexmk
+
