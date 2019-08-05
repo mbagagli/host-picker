@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 """Main picker module of HOST picking algorithm
 
 In this module are stored all the functions and classes needed to pick
-with HOS algorithms (skewness/kurtosis)
+with HOS algorithms (skewness/kurtosis).
+
+For a detailed explanation of the usage, the user should look the docs.
 
 """
-
-# --- Classes
 
 
 class Host(object):
