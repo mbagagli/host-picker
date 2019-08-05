@@ -1,15 +1,10 @@
 import numpy as np
 from obspy.core.trace import Trace
 import logging
-# plot
 import matplotlib.pyplot as plt
-import matplotlib.cm as mplcm
-import matplotlib.colors as colors
 #
 from host import scaffold as HS
 from host import errors as HE
-# from collections import OrderedDict
-# from matplotlib.dates import AutoDateocator, AutoDateFormatter
 
 
 logger = logging.getLogger(__name__)
@@ -63,8 +58,9 @@ def plot_HOST(trace,
                      'navy',
                      'darkorchid',
                      'lightseagreen',
-                     'coral',
-                     'orange']
+                     'red',
+                     'pink',
+                     'grey']
 
     # -------------------------- Loop over dicts
     # HOS:
@@ -113,27 +109,29 @@ def plot_HOST(trace,
                           linestyle=':',
                           label=_kk+" EVAL")
 
-    # PICKS:
-    for _ii, (_kk, _pp) in enumerate(pickTime_UTC.items()):
-        if _kk == "median":
-            if plot_final_PICKS:
+    # PICKS intermediate:
+    col_idx = 0
+    if plot_intermediate_PICKS:
+        for _kk, _pp in pickTime_UTC.items():
+            if _kk not in ('mean', 'median'):
                 inax.axvline(_pp - trace.stats.starttime,
-                             color="r",
-                             linestyle="-",
-                             linewidth=2,
-                             label=_kk+" PICK")
-        elif _kk == "mean":
-            if plot_final_PICKS:
-                inax.axvline(_pp - trace.stats.starttime,
-                             color="gold",
-                             linewidth=2,
-                             label=_kk+" PICK")
-        else:
-            if plot_intermediate_PICKS:
-                inax.axvline(_pp - trace.stats.starttime,
-                             color=my_color_list[_ii],
+                             color=my_color_list[col_idx],
                              linewidth=1.5,
                              label=_kk+" PICK")
+                col_idx += 1
+
+    # PICKS final:
+    if plot_final_PICKS:
+        inax.axvline(pickTime_UTC['mean'] - trace.stats.starttime,
+                     color="gold",
+                     linestyle="-",
+                     linewidth=2,
+                     label="mean PICK")
+        inax.axvline(pickTime_UTC['median'] - trace.stats.starttime,
+                     color="teal",
+                     linestyle="-",
+                     linewidth=2,
+                     label="median PICK")
 
     # -------------------------- Plot TRACE
     inax.plot(tv, td, "k", label="trace")
@@ -151,6 +149,8 @@ def plot_HOST(trace,
 # ================== TIPS
 # To create a continuos discrete list of colors with matplotlib
 
+# import matplotlib.cm as mplcm
+# import matplotlib.colors as colors
 #    NUM_COLORS = len(pickTime_UTC.keys()) - 2  # MB: - mean and  -median
 #    cm = plt.get_cmap('gist_rainbow')
 #    cNorm = colors.Normalize(vmin=0, vmax=NUM_COLORS-1)

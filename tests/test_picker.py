@@ -23,7 +23,7 @@ stproc = miniproc(straw)
 
 
 def test_init():
-    """ Test the picker """
+    """ Test the picker init method """
     errors = []
     #
     try:
@@ -80,8 +80,12 @@ def test_setter():
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
 
-def test_work_multiwin_kurt():
-    """ Test the setter """
+def test_work_multiwin_kurt_aic():
+    """ Test the HOST picking algorithm for:
+       - KURTOSIS
+       - MULTIWIN
+       - AIC
+    """
     errors = []
     #
     st = stproc.copy()
@@ -118,8 +122,12 @@ def test_work_multiwin_kurt():
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
 
-def test_work_singlewin_kurt():
-    """ Test the setter """
+def test_work_singlewin_kurt_aic():
+    """ Test the HOST picking algorithm for:
+       - KURTOSIS
+       - SINGLEWIN
+       - AIC
+    """
     errors = []
     #
     st = stproc.copy()
@@ -152,8 +160,12 @@ def test_work_singlewin_kurt():
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
 
-def test_work_multiwin_skew():
-    """ Test the setter """
+def test_work_multiwin_skew_aic():
+    """ Test the HOST picking algorithm for:
+       - SKEWNESS
+       - MULTIWIN
+       - AIC
+    """
     errors = []
     #
     st = stproc.copy()
@@ -190,8 +202,12 @@ def test_work_multiwin_skew():
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
 
-def test_work_singlewin_skew():
-    """ Test the setter """
+def test_work_singlewin_skew_aic():
+    """ Test the HOST picking algorithm for:
+       - SKEWNESS
+       - SINGLEWIN
+       - AIC
+    """
     errors = []
     #
     st = stproc.copy()
@@ -221,5 +237,87 @@ def test_work_singlewin_skew():
     for _kk, _pp in pickTime_UTC.items():
         if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s", _kk)
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_singlewin_skew_diff():
+    """ Test the HOST picking algorithm for:
+       - SKEWNESS
+       - SINGLEWIN
+       - DIFFERENCE
+    """
+    errors = []
+    #
+    st = stproc.copy()
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.500000"))
+    #
+    try:
+        HP = Host(st,
+                  0.7,
+                  channel="*Z",
+                  hos_method="skewness",
+                  detection_method="diff",
+                  diff_gauss_thresh=0.5)
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    pprint.pprint(pickTime_UTC)
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000)}
+    #
+    if len(pickTime_UTC.keys()) != 3:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s" % _kk)
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_multiwin_skew_diff():
+    """ Test the HOST picking algorithm for:
+       - SKEWNESS
+       - MULTIWIN
+       - DIFFERENCE
+    """
+    errors = []
+    #
+    st = stproc.copy()
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.500000"))
+    #
+    try:
+        HP = Host(st,
+                  [0.1, 0.15, 0.2, 0.25, 0.3],
+                  channel="*Z",
+                  hos_method="skewness",
+                  detection_method="diff",
+                  diff_gauss_thresh=0.5)
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    pprint.pprint(pickTime_UTC)
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 650000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 600000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 458000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000)}
+    #
+    if len(pickTime_UTC.keys()) != 7:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))

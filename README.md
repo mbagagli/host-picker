@@ -2,7 +2,7 @@
 
 **Author:** _Matteo Bagagli_
 **Date:** _08/2019 @ ETH-Zurich_
-**Version:** _1.0.0_
+**Version:** _1.0.1_
 
 ## Introduction
 The HOST picker is a High-Order-STatistics based picker.
