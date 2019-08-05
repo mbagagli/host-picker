@@ -168,6 +168,7 @@ def gauss_dev(inarr, thr):
     return all_idx[0] - 1, m, s, all_idx, hos_arr_diff
 
 
+# MB: next function seems unused
 def fit_and_pick(inarr, thr):
     """
     From this function, we expect to fit the exponential

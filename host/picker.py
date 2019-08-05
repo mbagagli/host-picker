@@ -88,6 +88,13 @@ class Host(object):
         self.hos_idx = {}
 
     # ============================== Private methods
+    def _preprocess(self):
+        """Minimal precprocessing method:
+          - remove mean
+          - remove linear trend
+        """
+        self.tr.detrend('demean')
+        self.tr.detrend('simple')
 
     def _calculate_CF(self, tw):
         if self.ts.size == 0:
@@ -130,15 +137,9 @@ class Host(object):
                 raise HE.MissingAttribute()
             hos_idx, m, s, all_idx, eval_fun = HS.gauss_dev(hos_arr,
                                                             self.thresh)
-            # if debugplot:
-            #     # --- For Fit/Gauss/
-            #     debug_plot_stat(eval_fun, m, s, thresh, highlight=all_idx)
 
         elif self.detection.lower() in ('aic', 'akaike'):
             hos_idx, eval_fun = HS.AICcf(hos_arr)
-            # if debugplot:
-            #     # --- For AIC
-            #     debug_plot_AIC(st, hos_arr, eval_fun, (hos_idx+N+1))
 
         else:
             logger.error("!WEIRD! Invalid pick extr. mode: %s " +
@@ -154,6 +155,7 @@ class Host(object):
             detect the pick.
 
         """
+        self._preprocess()
         # --- Calculate CF
         hos_arr, N = self._calculate_CF(tw)
 
