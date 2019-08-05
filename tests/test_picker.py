@@ -1,7 +1,6 @@
 from host.picker import Host
-import host.errors as HE
 from obspy import read, UTCDateTime
-import numpy as np
+import pprint
 
 
 def miniproc(st):
@@ -17,7 +16,7 @@ def miniproc(st):
     return prs
 
 
-straw = read()
+straw = read('./tests_data/obspy_read.mseed')
 stproc = miniproc(straw)
 
 # ================================================ Starting the tests
@@ -81,7 +80,7 @@ def test_setter():
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
 
-def test_work():
+def test_work_multiwin_kurt():
     """ Test the setter """
     errors = []
     #
@@ -89,10 +88,9 @@ def test_work():
     st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
-    st.plot()
     try:
         HP = Host(st,
-                  0.6,
+                  [0.1, 0.15, 0.2, 0.25, 0.3],
                   channel="*Z",
                   hos_method="kurtosis",
                   detection_method="aic",
@@ -101,4 +99,127 @@ def test_work():
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 640000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 590000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 668000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000)}
+    #
+    if len(pickTime_UTC.keys()) != 7:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s", _kk)
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_singlewin_kurt():
+    """ Test the setter """
+    errors = []
+    #
+    st = stproc.copy()
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.500000"))
+    #
+    try:
+        HP = Host(st,
+                  0.7,
+                  channel="*Z",
+                  hos_method="kurtosis",
+                  detection_method="aic",
+                  diff_gauss_thresh=None)
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 8, 100000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 8, 100000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 8, 100000)}
+    #
+    if len(pickTime_UTC.keys()) != 3:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s", _kk)
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_multiwin_skew():
+    """ Test the setter """
+    errors = []
+    #
+    st = stproc.copy()
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.500000"))
+    #
+    try:
+        HP = Host(st,
+                  [0.1, 0.15, 0.2, 0.25, 0.3],
+                  channel="*Z",
+                  hos_method="skewness",
+                  detection_method="aic",
+                  diff_gauss_thresh=None)
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 810000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 840000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 860000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 890000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 910000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 862000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 860000)}
+    #
+    if len(pickTime_UTC.keys()) != 7:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s", _kk)
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_singlewin_skew():
+    """ Test the setter """
+    errors = []
+    #
+    st = stproc.copy()
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.500000"))
+    #
+    try:
+        HP = Host(st,
+                  0.7,
+                  channel="*Z",
+                  hos_method="skewness",
+                  detection_method="aic",
+                  diff_gauss_thresh=None)
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000)}
+
+    #
+    if len(pickTime_UTC.keys()) != 3:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s", _kk)
+    #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))

@@ -81,39 +81,13 @@ class Host(object):
             logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
             raise HE.BadParameterValue()
 
-    def set_time_windows(self, timewin):
-        # sliding windows checks
-        if isinstance(timewin, (float, int)):
-            self.time_win = (timewin,)
-        elif isinstance(timewin, (list, tuple)):
-            self.time_win = timewin
-        else:
-            logger.error("Input time windows is not a valid type")
-            raise HE.BadInstance()
+        # Initialize output
+        self.pickTime_UTC = {}
+        self.hos_arr = {}
+        self.eval_fun = {}
+        self.hos_idx = {}
 
-    def set_hos_method(self, method):
-        if method.lower() in ('kurtosis', 'kurt', 'k'):
-            self.method = "kurt"
-        elif method.lower() in ('skewness', 'skew', 's'):
-            self.method = "skew"
-        else:
-            logger.error("HOS method not valid ['kurtosis'/'skewness']")
-            raise HE.BadParameterValue()
-
-    def set_detection_method(self, method):
-        if method.lower() in ('aic', 'akaike', 'a'):
-            self.detection = "aic"
-        elif method.lower() in ('diff', 'gauss'):
-            self.detection = "diff"
-        else:
-            logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
-            raise HE.BadParameterValue()
-
-    def set_diffgauss_threshold(self, threshold):
-        if self.detection in ('diff', 'gauss'):
-            self.thresh = threshold
-        else:
-            self.thresh = None
+    # ============================== Private methods
 
     def _calculate_CF(self, tw):
         if self.ts.size == 0:
@@ -173,16 +147,24 @@ class Host(object):
         #
         return hos_idx, eval_fun
 
+    # ============================== Public methods
+
     def pick(self, tw):
         """ This method will calculate first the CF, and then
             detect the pick.
 
         """
+        # --- Calculate CF
         hos_arr, N = self._calculate_CF(tw)
 
-        # 20052019 Adding transformation to ease the work of AIC/GAUSS_DIFF
+        # MB: Create absolute value to ease the work of self_detect_pick
         hos_arr = HS.transform_f2(hos_arr)
-        # hos_arr = transform_f3(hos_arr)
+
+        # MB: remove linear trend
+        # hos_arr = HS.transform_f3(hos_arr)
+
+        # MB: smooth HOS_CF (next line)
+        hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')
 
         # --- Extract Pick (AIC/GAUSS)
         hos_idx, eval_fun = self._detect_pick(hos_arr)
@@ -205,44 +187,110 @@ class Host(object):
         """
         # Check time windows
         if isinstance(self.time_win, (list, tuple)):
-            pickTime_UTC = {}
-            hos_arr = {}
-            eval_fun = {}
-            hos_idx = {}
+            _pt_UTC = {}
+            _pt_float = {}
+            _hos = {}
+            _eval = {}
+            _hos_idx = {}
             #
             for tw in self.time_win:
-                (pickTime_UTC[str(tw)],
-                 hos_arr[str(tw)],
-                 eval_fun[str(tw)],
-                 hos_idx[str(tw)]) = self.pick(tw)
+                (_pt_float[str(tw)],
+                 _hos[str(tw)],
+                 _eval[str(tw)],
+                 _hos_idx[str(tw)]) = self.pick(tw)
             #
-            meanUTC = UTCDateTime(np.array(list(pickTime_UTC.values())).mean())
+            meanUTC = UTCDateTime(np.array(list(_pt_float.values())).mean())
             medianUTC = UTCDateTime(np.median(
-                            np.array(list(pickTime_UTC.values()))))
-            pickTime_UTC['mean'] = meanUTC
-            pickTime_UTC['median'] = medianUTC
+                            np.array(list(_pt_float.values()))))
+            _pt_UTC['mean'] = meanUTC
+            _pt_UTC['median'] = medianUTC
             # Convert floats into UTCDateTime
-            for _kf, _vf in pickTime_UTC.items():
+            for _kf, _vf in _pt_float.items():
                 if _kf not in ('mean', 'median'):
-                    pickTime_UTC[_kf] = UTCDateTime(_vf)
+                    _pt_UTC[_kf] = UTCDateTime(_vf)
         elif isinstance(self.time_win, (float, int)):
-            pickTime_float, hos_arr, eval_fun, hos_idx = (
+            _pt_float, _hos, _eval, _hos_idx = (
                                                     self.pick(self.time_win))
-            pickTime_UTC = UTCDateTime(pickTime_float)
+            _pt_UTC = UTCDateTime(_pt_float)
         else:
             logger.error("Param. time_win should be either iterable or float/int")
             raise HE.BadParameterValue()
 
-        # =============================================
-        import pprint
-        pprint.pprint(pickTime_UTC)
         if debug_plot:
+            HP.plot_HOST(self.tr,
+                         _hos,
+                         _eval,
+                         _pt_UTC,
+                         normalize=True,
+                         plot_ax=None,
+                         axtitle="HOST picks",
+                         shift_cf=False,
+                         plot_HOS=True,
+                         plot_EVAL=True,
+                         plot_intermediate_PICKS=True,
+                         plot_final_PICKS=True,
+                         show=True)
 
-            HP.plot_HOST()
-            pass
+        # Store results in the class attribute
+        self.pickTime_UTC = _pt_UTC
+        self.hos_arr = _hos
+        self.eval_fun = _eval
+        self.hos_idx = _hos_idx
 
+    def plot(self, **kwargs):
+        """ Class wrapper for plotting the data of HOST) """
+        outax = HP.plot_HOST(self.tr,
+                             self.hos_arr,
+                             self.eval_fun,
+                             self.pickTime_UTC,
+                             **kwargs,
+                             show=True)
+        return outax
 
-        return pickTime_UTC, hos_arr, eval_fun, hos_idx
+    # ============================== Getter / Setter methods
 
+    def get_picks_UTC(self):
+        return self.pickTime_UTC
 
+    def get_HOS(self):
+        return self.hos_arr
 
+    def get_eval_functions(self):
+        return self.hos_arr
+
+    def get_picks_index(self):
+        return self.hos_idx
+
+    def set_time_windows(self, timewin):
+        # sliding windows checks
+        if isinstance(timewin, (float, int)):
+            self.time_win = (timewin,)
+        elif isinstance(timewin, (list, tuple)):
+            self.time_win = timewin
+        else:
+            logger.error("Input time windows is not a valid type")
+            raise HE.BadInstance()
+
+    def set_hos_method(self, method):
+        if method.lower() in ('kurtosis', 'kurt', 'k'):
+            self.method = "kurt"
+        elif method.lower() in ('skewness', 'skew', 's'):
+            self.method = "skew"
+        else:
+            logger.error("HOS method not valid ['kurtosis'/'skewness']")
+            raise HE.BadParameterValue()
+
+    def set_detection_method(self, method):
+        if method.lower() in ('aic', 'akaike', 'a'):
+            self.detection = "aic"
+        elif method.lower() in ('diff', 'gauss'):
+            self.detection = "diff"
+        else:
+            logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
+            raise HE.BadParameterValue()
+
+    def set_diffgauss_threshold(self, threshold):
+        if self.detection in ('diff', 'gauss'):
+            self.thresh = threshold
+        else:
+            self.thresh = None

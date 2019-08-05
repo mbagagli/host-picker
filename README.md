@@ -1,5 +1,4 @@
 # HOST picker
-=============
 
 **Author:** _Matteo Bagagli_
 **Date:** _08/2019 @ ETH-Zurich_
