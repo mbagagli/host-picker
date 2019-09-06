@@ -111,7 +111,6 @@ def plot_HOST(trace,
                           label=_kk+" EVAL")
 
     # PICKS intermediate:
-
     col_idx = 0
     if plot_intermediate_PICKS:
         for _kk, _pp in pickTime_UTC.items():
