@@ -22,6 +22,7 @@ def plot_HOST(trace,
               plot_EVAL=False,
               plot_intermediate_PICKS=False,
               plot_final_PICKS=True,
+              plot_additional_PICKS={},
               show=False):
     """Comprehensive plotting function.
 
@@ -110,6 +111,7 @@ def plot_HOST(trace,
                           label=_kk+" EVAL")
 
     # PICKS intermediate:
+
     col_idx = 0
     if plot_intermediate_PICKS:
         for _kk, _pp in pickTime_UTC.items():
@@ -119,6 +121,20 @@ def plot_HOST(trace,
                              linewidth=1.5,
                              label=_kk+" PICK")
                 col_idx += 1
+
+    # PICKS additional:
+    my_color_list_add = ['lime',
+                         'forestgreen',
+                         'limegreen',
+                         'darkgreen']
+    col_idx = 0
+    if plot_additional_PICKS and isinstance(plot_additional_PICKS, dict):
+        for _kk, _pp in plot_additional_PICKS.items():
+            inax.axvline(_pp - trace.stats.starttime,
+                         color=my_color_list_add[col_idx],
+                         linewidth=1.5,
+                         label=_kk)
+            col_idx += 1
 
     # PICKS final:
     if plot_final_PICKS:

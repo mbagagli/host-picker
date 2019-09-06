@@ -155,7 +155,7 @@ class Host(object):
             detect the pick.
 
         """
-        self._preprocess()
+        # self._preprocess()
         # --- Calculate CF
         hos_arr, N = self._calculate_CF(tw)
 
@@ -166,7 +166,7 @@ class Host(object):
         # hos_arr = HS.transform_f3(hos_arr)
 
         # MB: smooth HOS_CF (next line)
-        hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')
+        # hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')
 
         # --- Extract Pick (AIC/GAUSS)
         hos_idx, eval_fun = self._detect_pick(hos_arr)
@@ -215,7 +215,8 @@ class Host(object):
                                                     self.pick(self.time_win))
             _pt_UTC = UTCDateTime(_pt_float)
         else:
-            logger.error("Param. time_win should be either iterable or float/int")
+            logger.error("Parameter time_windows should be either " +
+                         "iterable or float/int")
             raise HE.BadParameterValue()
 
         if debug_plot:
@@ -240,7 +241,7 @@ class Host(object):
         self.hos_idx = _hos_idx
 
     def plot(self, **kwargs):
-        """ Class wrapper for plotting the data of HOST) """
+        """ Class wrapper for plotting the data of HOST """
         outax = HP.plot_HOST(self.tr,
                              self.hos_arr,
                              self.eval_fun,
