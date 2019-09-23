@@ -61,7 +61,9 @@ def plot_HOST(trace,
                      'lightseagreen',
                      'red',
                      'pink',
-                     'grey']
+                     'grey',
+                     'violet',
+                     'brown']
 
     # -------------------------- Loop over dicts
     # HOS:

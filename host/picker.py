@@ -5,7 +5,7 @@ from obspy.core import Stream
 from obspy.core import UTCDateTime
 #
 from host import errors as HE
-from host import plotting as HP
+from host import plotting as HPL
 from host import scaffold as HS
 
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ class Host(object):
         #
         return hos_arr, N
 
-    def _detect_pick(self, hos_arr):
+    def _detect_pick(self, hos_arr, lost_samples=0):
         """Use one of the possible method to detect the pick over an
            HOS carachteristic function.
 
@@ -135,8 +135,19 @@ class Host(object):
             if not self.thresh:
                 logger.error("Missing threshold for 'diff' DETECTION method")
                 raise HE.MissingAttribute()
-            hos_idx, m, s, all_idx, eval_fun = HS.gauss_dev(hos_arr,
-                                                            self.thresh)
+
+            try:
+                hos_idx, m, s, all_idx, eval_fun = HS.gauss_dev(hos_arr,
+                                                                self.thresh)
+            except HE.PickNotFound:
+                import pprint
+                import matplotlib.pyplot as plt
+                pprint.pprint(eval_fun)
+                pprint.pprint(m)
+                pprint.pprint(s)
+                pprint.pprint(all_idx)
+                plt.plot(eval_fun)
+                plt.show()
 
         elif self.detection.lower() in ('aic', 'akaike'):
             hos_idx, eval_fun = HS.AICcf(hos_arr)
@@ -146,7 +157,7 @@ class Host(object):
                          "['aic'; 'diff'/'gauss']" % self.detection)
             raise HE.BadParameterValue()
         #
-        return hos_idx, eval_fun
+        return hos_idx+lost_samples, eval_fun
 
     # ============================== Public methods
 
@@ -166,7 +177,16 @@ class Host(object):
         # hos_arr = HS.transform_f3(hos_arr)
 
         # MB: smooth HOS_CF (next line)
-        # hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')
+        hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')  # TESTOK
+
+        # ======================== MB 092019
+        hos_arr = hos_arr**2
+
+        # MB: derivative HOS_CF
+        # hos_arr, lostN = HS.transform_f5(hos_arr, n_th=3)  # MB new
+        # hos_arr = HS.transform_f4(hos_arr, round(N/2), window_type='hanning')
+
+        # ========================
 
         # --- Extract Pick (AIC/GAUSS)
         hos_idx, eval_fun = self._detect_pick(hos_arr)
@@ -210,29 +230,30 @@ class Host(object):
             for _kf, _vf in _pt_float.items():
                 if _kf not in ('mean', 'median'):
                     _pt_UTC[_kf] = UTCDateTime(_vf)
+
         elif isinstance(self.time_win, (float, int)):
-            _pt_float, _hos, _eval, _hos_idx = (
-                                                    self.pick(self.time_win))
+            _pt_float, _hos, _eval, _hos_idx = self.pick(self.time_win)
             _pt_UTC = UTCDateTime(_pt_float)
+
         else:
             logger.error("Parameter time_windows should be either " +
                          "iterable or float/int")
             raise HE.BadParameterValue()
 
         if debug_plot:
-            HP.plot_HOST(self.tr,
-                         _hos,
-                         _eval,
-                         _pt_UTC,
-                         normalize=True,
-                         plot_ax=None,
-                         axtitle="HOST picks",
-                         shift_cf=False,
-                         plot_HOS=True,
-                         plot_EVAL=True,
-                         plot_intermediate_PICKS=True,
-                         plot_final_PICKS=True,
-                         show=True)
+            HPL.plot_HOST(self.tr,
+                          _hos,
+                          _eval,
+                          _pt_UTC,
+                          normalize=True,
+                          plot_ax=None,
+                          axtitle="HOST picks",
+                          shift_cf=False,
+                          plot_HOS=True,
+                          plot_EVAL=True,
+                          plot_intermediate_PICKS=True,
+                          plot_final_PICKS=True,
+                          show=True)
 
         # Store results in the class attribute
         self.pickTime_UTC = _pt_UTC
@@ -242,12 +263,12 @@ class Host(object):
 
     def plot(self, **kwargs):
         """ Class wrapper for plotting the data of HOST """
-        outax = HP.plot_HOST(self.tr,
-                             self.hos_arr,
-                             self.eval_fun,
-                             self.pickTime_UTC,
-                             **kwargs,
-                             show=True)
+        outax = HPL.plot_HOST(self.tr,
+                              self.hos_arr,
+                              self.eval_fun,
+                              self.pickTime_UTC,
+                              **kwargs,
+                              show=True)
         return outax
 
     # ============================== Getter / Setter methods

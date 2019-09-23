@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 #
-# from host import errors as HE
+from host import errors as HE
 
 logger = logging.getLogger(__name__)
 
@@ -155,18 +155,36 @@ def transform_f4(inarr, smooth_win, window_type='hanning'):
     return _smooth(inarr, window_len=smooth_win, window=window_type)
 
 
+def transform_f5(inarr, n_th=1, delta=None):
+    """Calculate the n_th discrete derivative of the input array
+
+    n_th must be INTEGER
+
+    Return:
+        The derivative array +
+    """
+    if delta:
+        _tmp = np.diff(inarr, n=n_th)
+        return _tmp/delta, n_th
+    else:
+        return np.diff(inarr, n=n_th), n_th
+
+
 def gauss_dev(inarr, thr):
     """
     Assuming it's half gaussian we calculate the mean and std.
     We multiply the std with a std deviation with a threshold
     """
-    hos_arr_diff = np.diff(inarr)
+    # hos_arr_diff = np.diff(inarr)
+    hos_arr_diff = np.abs(np.diff(inarr))
     m = np.mean(hos_arr_diff)
     s = np.std(hos_arr_diff)
     #
     all_idx = np.where(hos_arr_diff >= thr*s)[0]
-    return all_idx[0] - 1, m, s, all_idx, hos_arr_diff
-
+    if len(all_idx) > 1:
+        return all_idx[0] - 1, m, s, all_idx, hos_arr_diff
+    else:
+        raise HE.PickNotFound()
 
 # MB: next function seems unused
 def fit_and_pick(inarr, thr):

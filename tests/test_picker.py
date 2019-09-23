@@ -1,6 +1,7 @@
 from host.picker import Host
 from obspy import read, UTCDateTime
 import pprint
+import sys
 
 
 def miniproc(st):
@@ -102,7 +103,7 @@ def test_work_multiwin_kurt_aic():
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
-    HP.work(debug_plot=False)
+    HP.work(debug_plot=True)
     pickTime_UTC = HP.get_picks_UTC()
     ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
                      '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
@@ -117,7 +118,7 @@ def test_work_multiwin_kurt_aic():
     #
     for _kk, _pp in pickTime_UTC.items():
         if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
-            errors.append("wrong KEY for pick %s", _kk)
+            errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -265,7 +266,6 @@ def test_work_singlewin_skew_diff():
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    pprint.pprint(pickTime_UTC)
     ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000),
                      'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000)}
@@ -304,7 +304,6 @@ def test_work_multiwin_skew_diff():
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    pprint.pprint(pickTime_UTC)
     ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 650000),
                      '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
                      '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
