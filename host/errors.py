@@ -41,6 +41,13 @@ class MissingAttribute(Error):
     pass
 
 
+class PickNotFound(Error):
+    """ Raised when a pick is not found or is not possible to evaluate
+        the trace
+    """
+    pass
+
+
 class Miscellanea(Error):
     """ Raised when the developer is too lazy to think at smth else """
     pass
