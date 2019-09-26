@@ -15,6 +15,12 @@ Most of them are needed to calculate the CF and process it.
 """
 
 
+def _abort():
+    """ Force current Python shell to close, use it wisely """
+    import sys
+    sys.exit()
+
+
 def _normalize_trace(workList, rangeVal=[-1, 1]):
     ''' This simple method will normalize the trace between rangeVal.
         Simply by scaling everything...
@@ -94,6 +100,7 @@ def _smooth(x, window_len=11, window='hanning'):
     return y[int(np.ceil(window_len/2-1)): -int(np.floor((window_len/2)))]
 
 
+# ====================================  CALCULATE CF
 def central_moment(arr, j, k=1, N=1):
     """
     Calculate the central moment of order k, given an array
@@ -119,11 +126,35 @@ def sixteen_eightteen(arr, j, k, N):
     return (partA - partB)
 
 
+# ====================================  TRANSFORM CF
+def transform_f1(inarr, n_th=1, delta=None):
+    """Calculate the n_th discrete derivative of the input array
+
+    n_th must be INTEGER
+
+    Return:
+        The derivative array + number of samples to skip on final count
+    """
+    if not isinstance(inarr, np.ndarray):
+        logger.error("The input vector should be a numpy array type")
+        raise HE.BadInstance()
+    #
+    if delta:
+        _tmp = np.diff(inarr, n=n_th)
+        return _tmp/delta, n_th
+    else:
+        return np.diff(inarr, n=n_th), n_th
+
+
 def transform_f2(inarr):
-    """
-    Transformation num 2 from
+    """It's equal to transformation num 2 from
     http://www.ipgp.fr/~mangeney/Baillard_etal_bssa_2014
+
     """
+    if not isinstance(inarr, np.ndarray):
+        logger.error("The input vector should be a numpy array type")
+        raise HE.BadInstance()
+    #
     b = np.zeros(inarr.size)
     b[0] = inarr[0]
     for i in range(1, len(inarr)-1):
@@ -136,10 +167,16 @@ def transform_f2(inarr):
 
 
 def transform_f3(inarr):
-    """
-    Transformation num 3 from
+    """Removing linear trend
+
+    It's equal to transformation num 3 from
     http://www.ipgp.fr/~mangeney/Baillard_etal_bssa_2014
+
     """
+    if not isinstance(inarr, np.ndarray):
+        logger.error("The input vector should be a numpy array type")
+        raise HE.BadInstance()
+    #
     from scipy.signal import detrend
     return detrend(inarr)
 
@@ -150,24 +187,23 @@ def transform_f4(inarr, smooth_win, window_type='hanning'):
     smooth_win is in SAMPLE!
     If smooth_win is even a +1 is given to make it odd
     """
+    if not isinstance(inarr, np.ndarray):
+        logger.error("The input vector should be a numpy array type")
+        raise HE.BadInstance()
+    #
     if smooth_win % 2 == 0:
         smooth_win += 1
     return _smooth(inarr, window_len=smooth_win, window=window_type)
 
 
-def transform_f5(inarr, n_th=1, delta=None):
-    """Calculate the n_th discrete derivative of the input array
-
-    n_th must be INTEGER
-
-    Return:
-        The derivative array +
+def transform_f5(inarr, power=2.0):
+    """Elevate each single value in the array to the specified power
     """
-    if delta:
-        _tmp = np.diff(inarr, n=n_th)
-        return _tmp/delta, n_th
-    else:
-        return np.diff(inarr, n=n_th), n_th
+    if not isinstance(inarr, np.ndarray):
+        logger.error("The input vector should be a numpy array type")
+        raise HE.BadInstance()
+    #
+    return inarr**power
 
 
 def gauss_dev(inarr, thr):
@@ -181,33 +217,12 @@ def gauss_dev(inarr, thr):
     s = np.std(hos_arr_diff)
     #
     all_idx = np.where(hos_arr_diff >= thr*s)[0]
-    if len(all_idx) > 1:
+    all_idx[0]
+    try:
         return all_idx[0] - 1, m, s, all_idx, hos_arr_diff
-    else:
+    except IndexError:
+        print("son dentro IN")
         raise HE.PickNotFound()
-
-# MB: next function seems unused
-def fit_and_pick(inarr, thr):
-    """
-    From this function, we expect to fit the exponential
-    statistical distribution, and then operate with the mean/std
-    threshold for detection of first arrival.
-    """
-    from scipy.optimize import curve_fit
-
-    def fitFunc(t, a):
-        return a*np.exp(-a*t)
-
-    mydiff = np.diff(inarr)
-    count, division = np.histogram(mydiff, bins=int(len(inarr)/2))
-    fitParams, fitCov = curve_fit(fitFunc,
-                                  division[0:len(division)-1],
-                                  count)
-    #
-    mean = 1/fitParams[0]
-    variance = 1/(fitParams[0]**2)
-    all_idx = np.where(mydiff >= thr*mean)[0]
-    return all_idx[0] - 1, mean, variance, fitCov, mydiff
 
 
 def normalize_and_select(inarr, thr):
@@ -264,3 +279,28 @@ def AICcf(td):
     # **** didn't take into account to minimum at the border of
     # **** the searching window
     return idx, AIC
+
+
+# ======================================== OLD METHODS
+# # MB: next function seems unused
+# def fit_and_pick(inarr, thr):
+#     """
+#     From this function, we expect to fit the exponential
+#     statistical distribution, and then operate with the mean/std
+#     threshold for detection of first arrival.
+#     """
+#     from scipy.optimize import curve_fit
+
+#     def fitFunc(t, a):
+#         return a*np.exp(-a*t)
+
+#     mydiff = np.diff(inarr)
+#     count, division = np.histogram(mydiff, bins=int(len(inarr)/2))
+#     fitParams, fitCov = curve_fit(fitFunc,
+#                                   division[0:len(division)-1],
+#                                   count)
+#     #
+#     mean = 1/fitParams[0]
+#     variance = 1/(fitParams[0]**2)
+#     all_idx = np.where(mydiff >= thr*mean)[0]
+#     return all_idx[0] - 1, mean, variance, fitCov, mydiff

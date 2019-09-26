@@ -1,4 +1,7 @@
 ### Info for HOST developers
+
+=================================
+SOLVED in v1.1.0
 The test will pass only if the `host.picker` module will have the following lines uncommented (active)
 
 ```
@@ -8,3 +11,4 @@ The test will pass only if the `host.picker` module will have the following line
 
 In further release should be added some switch in the configuration file to decide which steps between
 `f1-f2-f3-f4` should be done 
+=================================

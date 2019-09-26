@@ -39,6 +39,7 @@ class Host(object):
                  time_windows,
                  channel="*Z",
                  hos_method="kurtosis",
+                 transform_cf={},
                  detection_method="aic",
                  diff_gauss_thresh=None):
 
@@ -80,6 +81,11 @@ class Host(object):
         else:
             logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
             raise HE.BadParameterValue()
+
+        if transform_cf:
+            self.tr_cf = transform_cf
+        else:
+            self.tr_cf = None
 
         # Initialize output
         self.pickTime_UTC = {}
@@ -125,6 +131,31 @@ class Host(object):
         #
         return hos_arr, N
 
+    def _transform_cf(self, inarr, num_sample):
+        """ This private method will take care of the transformation
+            of the HOST CF function to better increase the signal/noise
+            ratio and therefore leading to a better pick detection.
+
+        """
+        if isinstance(inarr, np.ndarray) and inarr.size != 0:
+            if self.tr_cf and isinstance(self.tr_cf, dict):
+                outarr = inarr
+                for _kk, _vv in self.tr_cf.items():
+                    logger.debug("Transform HOST CF: %s" % _kk)
+                    call_funct = getattr(HS, _kk.lower())
+                    if _kk.lower() == 'transform_f4':
+                        outarr = call_funct(outarr, num_sample, **_vv)
+                    else:
+                        outarr = call_funct(outarr, **_vv)
+            else:
+                logger.error("The transform_cf parameter must be a dict!")
+                raise HE.BadInstance()
+        else:
+            logger.error("Missing INPUT array")
+            raise HE.MissingVariable()
+        #
+        return outarr
+
     def _detect_pick(self, hos_arr, lost_samples=0):
         """Use one of the possible method to detect the pick over an
            HOS carachteristic function.
@@ -135,19 +166,14 @@ class Host(object):
             if not self.thresh:
                 logger.error("Missing threshold for 'diff' DETECTION method")
                 raise HE.MissingAttribute()
-
             try:
                 hos_idx, m, s, all_idx, eval_fun = HS.gauss_dev(hos_arr,
                                                                 self.thresh)
             except HE.PickNotFound:
-                import pprint
-                import matplotlib.pyplot as plt
-                pprint.pprint(eval_fun)
-                pprint.pprint(m)
-                pprint.pprint(s)
-                pprint.pprint(all_idx)
-                plt.plot(eval_fun)
-                plt.show()
+                logger.error("Critical error! We should not be here! " +
+                             " The hos_arr should be always positive, " +
+                             "and therefore also the threshold level")
+                HS._abort()
 
         elif self.detection.lower() in ('aic', 'akaike'):
             hos_idx, eval_fun = HS.AICcf(hos_arr)
@@ -166,37 +192,24 @@ class Host(object):
             detect the pick.
 
         """
-        # self._preprocess()
-        # --- Calculate CF
+
+        # ======================== Calculate CF
         hos_arr, N = self._calculate_CF(tw)
 
-        # MB: Create absolute value to ease the work of self_detect_pick
-        hos_arr = HS.transform_f2(hos_arr)
+        # ======================== Transform CF
+        if self.tr_cf:
+            hos_arr = self._transform_cf(hos_arr, N)
 
-        # MB: remove linear trend
-        # hos_arr = HS.transform_f3(hos_arr)
-
-        # MB: smooth HOS_CF (next line)
-        hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')  # TESTOK
-
-        # ======================== MB 092019
-        hos_arr = hos_arr**2
-
-        # MB: derivative HOS_CF
-        # hos_arr, lostN = HS.transform_f5(hos_arr, n_th=3)  # MB new
-        # hos_arr = HS.transform_f4(hos_arr, round(N/2), window_type='hanning')
-
-        # ========================
-
-        # --- Extract Pick (AIC/GAUSS)
+        # ======================== Extract Pick (AIC/GAUSS)
         hos_idx, eval_fun = self._detect_pick(hos_arr)
 
-        # --- Closing
+        # ======================== Closing
         # time= NUMsamples/df OR NUMsamples*dt
         logger.debug("HOS: %s - PICKSEL: %s - idx: %r" % (self.method,
                                                           self.detection,
                                                           hos_idx+N+1))
         pickTime_UTC = self.tr.stats.starttime + ((hos_idx+N+1) * self.dt)
+        #
         return float(pickTime_UTC), hos_arr, eval_fun, (hos_idx+N+1)
 
     def work(self, debug_plot=False):
@@ -318,3 +331,8 @@ class Host(object):
             self.thresh = threshold
         else:
             self.thresh = None
+
+# ==== Best use with diff (2.2 - 2.5)
+# hos_arr = HS.transform_f2(hos_arr)
+# hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')  # TESTOK
+# hos_arr = hos_arr**2  # MB 092019
