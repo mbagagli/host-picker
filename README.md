@@ -5,7 +5,7 @@
 **Version:** _1.1.0_
 
 ## Introduction
-The HOST picker is a High-Order-STatistics based picker.
+The **HOST** picker is a **H**igh-**O**rder-**ST**atistics based picker.
 This algorithm is a variation of the one described in [Baillard et al. 2013](http://www.ipgp.fr/~mangeney/Baillard_etal_bssa_2014),
 and it is convenient for multiple usage and different scientific problem.
 This picker is yet simple and stable, but powerful in detecting consistent phase arrival (or general transient).
