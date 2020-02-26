@@ -2,7 +2,7 @@
 
 **Author:** _Matteo Bagagli_
 **Date:** _08/2019 @ ETH-Zurich_
-**Version:** _1.1.0_
+**Version:** _1.1.1_
 
 ## Introduction
 The **HOST** picker is a **H**igh-**O**rder-**ST**atistics based picker.

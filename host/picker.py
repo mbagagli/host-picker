@@ -112,7 +112,7 @@ class Host(object):
                                                      float(self.dt)))
             raise HE.BadParameterValue()
         # --- Calculate CF
-        logger.info("Calculating CF with HOS: %s" % self.method.upper())
+        logger.debug("Calculating CF with HOS: %s" % self.method.upper())
         hos_arr = np.array([])
         N = round(tw/self.dt) + 1    # (16.16)
         for j, x in enumerate(self.ts):
@@ -161,7 +161,7 @@ class Host(object):
            HOS carachteristic function.
 
         """
-        logger.info("Detecting PICK with %s" % self.detection.upper())
+        logger.debug("Detecting PICK with %s" % self.detection.upper())
         if self.detection.lower() in ('diff', 'gauss'):
             if not self.thresh:
                 logger.error("Missing threshold for 'diff' DETECTION method")
