@@ -92,12 +92,21 @@ def plot_HOST(trace,
     # EVAL:
     if plot_EVAL:
         for _ii, (_kk, _aa) in enumerate(eval_fun.items()):
+            # GoingToC: replace INFs/NANs at the start and end with
+            #           adiacent values for plotting reasons.
+            #           This is introduced mainly for AIC EVAL.
+            #           It will not affect GAUSSIAN-EVAL as well
+            zeropad_start = td.size - _aa.size - 1
+            _aa[0] = _aa[1]
+            _aa[-1] = _aa[-2]
+            _tt = _aa[~np.isnan(_aa)]
+            _tt = _tt[~np.isinf(_aa)]
+            zeropad_end = _aa.size - _tt.size + 1
             if normalize:
-                _aa = HS._normalize_trace(_aa, rangeVal=[0, 1])
-            zeropad = len(td) - len(_aa)
+                _aa = HS._normalize_trace(_tt, rangeVal=[0, 1])
             #
             if shift_cf:
-                inax.plot(tv, np.pad(_aa, (zeropad, 0), mode='constant',
+                inax.plot(tv, np.pad(_aa, (zeropad_start, zeropad_end), mode='constant',
                                      constant_values=(np.nan,)) +
                                     (_ii+1)*shift_cf,
                           color=my_color_list[_ii],
@@ -105,7 +114,7 @@ def plot_HOST(trace,
                           linestyle=':',
                           label=_kk+" EVAL")
             else:
-                inax.plot(tv, np.pad(_aa, (zeropad, 0), mode='constant',
+                inax.plot(tv, np.pad(_aa, (zeropad_start, zeropad_end), mode='constant',
                                      constant_values=(np.nan,)),
                           color=my_color_list[_ii],
                           linewidth=1,
@@ -161,16 +170,3 @@ def plot_HOST(trace,
         plt.show()
     #
     return inax
-
-
-# ================== TIPS
-# To create a continuos discrete list of colors with matplotlib
-
-# import matplotlib.cm as mplcm
-# import matplotlib.colors as colors
-#    NUM_COLORS = len(pickTime_UTC.keys()) - 2  # MB: - mean and  -median
-#    cm = plt.get_cmap('gist_rainbow')
-#    cNorm = colors.Normalize(vmin=0, vmax=NUM_COLORS-1)
-#    scalarMap = mplcm.ScalarMappable(norm=cNorm, cmap=cm)
-#    inax.set_prop_cycle(color=[scalarMap.to_rgba(i)
-#                               for i in range(NUM_COLORS)])

@@ -1,5 +1,5 @@
 # Initialize the Higher Order STatistics picker
 
 AUTHOR = "Matteo Bagagli @ ETH-Zurich"
-DATE = "08/2019"
-VERSION = "1.1.1"
+DATE = "06/2020"
+VERSION = "2.0.0"

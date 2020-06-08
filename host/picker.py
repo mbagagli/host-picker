@@ -1,5 +1,7 @@
 import logging
 import numpy as np
+import pathlib
+import ctypes as C
 #
 from obspy.core import Stream
 from obspy.core import UTCDateTime
@@ -19,6 +21,53 @@ with HOS algorithms (skewness/kurtosis).
 For a detailed explanation of the usage, the user should look the docs.
 
 """
+
+# ===================================================== SETUP C LIBRARY
+MODULEPATH = pathlib.Path(__file__).parent.absolute()
+libname = tuple(MODULEPATH.glob("src/host_clib.*.so"))[0]
+myclib = C.CDLL(libname)
+
+myclib.kurtcf.restype = C.c_int
+myclib.kurtcf.argtypes = [np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS'),
+                          C.c_int, C.c_int,
+                          # OUT
+                          np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS')]
+#
+myclib.kurtcf_mean.restype = C.c_int
+myclib.kurtcf_mean.argtypes = [np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS'),
+                               C.c_int, C.c_int,
+                               # OUT
+                               np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS')]
+#
+myclib.skewcf.restype = C.c_int
+myclib.skewcf.argtypes = [np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS'),
+                          C.c_int, C.c_int,
+                          # OUT
+                          np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS')]
+#
+myclib.skewcf_mean.restype = C.c_int
+myclib.skewcf_mean.argtypes = [np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS'),
+                               C.c_int, C.c_int,
+                               # OUT
+                               np.ctypeslib.ndpointer(
+                                        dtype=np.float32, ndim=1,
+                                        flags='C_CONTIGUOUS')]
+
+# =====================================================================
 
 
 class Host(object):
@@ -113,22 +162,26 @@ class Host(object):
             raise HE.BadParameterValue()
         # --- Calculate CF
         logger.debug("Calculating CF with HOS: %s" % self.method.upper())
-        hos_arr = np.array([])
-        N = round(tw/self.dt) + 1    # (16.16)
-        for j, x in enumerate(self.ts):
-            if j >= N:  # if j >= N: #new  j >=1 #old
-                mk2 = HS.sixteen_eightteen(self.ts, j, N=N, k=2)     # 16.18
-                if self.method == "kurt":
-                    mk4 = HS.sixteen_eightteen(self.ts, j, N=N, k=4)
-                    hos_arr = np.append(hos_arr, mk4/(mk2**2))
-                elif self.method == "skew":
-                    mk3 = HS.sixteen_eightteen(self.ts, j, N=N, k=3)
-                    hos_arr = np.append(hos_arr, mk3/(mk2**3/2))
-                else:
-                    logger.error("!WEIRD! Wrong HOS method given " +
-                                 "['skew'/'kurt']")
-                    raise HE.BadParameterValue()
+        N = round(tw/self.dt) + 1
+        tmparr = np.ascontiguousarray(self.ts, np.float32)
+        hos_arr = np.zeros(self.ts.size, dtype=np.float32, order="C")
+        if self.method == "kurt":
+            ret = myclib.kurtcf(tmparr, self.ts.size, N, hos_arr)
+        elif self.method == "kurt_mean":
+            ret = myclib.kurtcf_mean(tmparr, self.ts.size, N, hos_arr)
+        elif self.method == "skew":
+            ret = myclib.skewcf(tmparr, self.ts.size, N, hos_arr)
+        elif self.method == "skew_mean":
+            ret = myclib.skewcf_mean(tmparr, self.ts.size, N, hos_arr)
+        else:
+            logger.error("!WEIRD! Wrong HOS method given " +
+                         "['skew', 'skew_mean', 'kurt', 'kurt_mean']")
+            raise HE.BadParameterValue()
         #
+        if ret != 0:
+            raise HE.PickNotFound("CF calculation went wrong! [%s]",
+                                  self.method)
+        hos_arr = np.delete(hos_arr, np.arange(N))
         return hos_arr, N
 
     def _transform_cf(self, inarr, num_sample):
@@ -156,7 +209,7 @@ class Host(object):
         #
         return outarr
 
-    def _detect_pick(self, hos_arr, lost_samples=0):
+    def _detect_pick(self, hos_arr):
         """Use one of the possible method to detect the pick over an
            HOS carachteristic function.
 
@@ -183,7 +236,7 @@ class Host(object):
                          "['aic'; 'diff'/'gauss']" % self.detection)
             raise HE.BadParameterValue()
         #
-        return hos_idx+lost_samples, eval_fun
+        return hos_idx, eval_fun
 
     # ============================== Public methods
 
@@ -207,10 +260,10 @@ class Host(object):
         # time= NUMsamples/df OR NUMsamples*dt
         logger.debug("HOS: %s - PICKSEL: %s - idx: %r" % (self.method,
                                                           self.detection,
-                                                          hos_idx+N+1))
-        pickTime_UTC = self.tr.stats.starttime + ((hos_idx+N+1) * self.dt)
+                                                          hos_idx+N))
+        pickTime_UTC = self.tr.stats.starttime + ((hos_idx+N) * self.dt)
         #
-        return float(pickTime_UTC), hos_arr, eval_fun, (hos_idx+N+1)
+        return float(pickTime_UTC), hos_arr, eval_fun, (hos_idx+N)
 
     def work(self, debug_plot=False):
         """Main public method to run the picking algotrithm
@@ -332,7 +385,3 @@ class Host(object):
         else:
             self.thresh = None
 
-# ==== Best use with diff (2.2 - 2.5)
-# hos_arr = HS.transform_f2(hos_arr)
-# hos_arr = HS.transform_f4(hos_arr, N, window_type='hanning')  # TESTOK
-# hos_arr = hos_arr**2  # MB 092019

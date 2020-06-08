@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import setup, find_packages, Extension
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -6,18 +6,24 @@ with open("README.md", "r") as fh:
 with open("requirements.txt") as f:
     required_list = f.read().splitlines()
 
-setuptools.setup(
+cmodule = Extension('host/src/host_clib',
+                    sources=['host/src/host_clib.c'],
+                    extra_compile_args=["-O3"])
+
+setup(
     name="host",
-    version="1.1.1",
+    version="2.0.0",
     author="Matteo Bagagli",
     author_email="matteo.bagagli@erdw.ethz.com",
     description="a High Order STatisics picker algorithm",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    # url="https://github.com/billy4all/quake",
     python_requires='>=3.6',
     install_requires=required_list,
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
+    package_data={"aurem": ['src/*.c']},
+    include_package_data=True,
+    ext_modules=[cmodule],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

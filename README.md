@@ -1,8 +1,8 @@
 # HOST picker
 
 **Author:** _Matteo Bagagli_
-**Date:** _08/2019 @ ETH-Zurich_
-**Version:** _1.1.1_
+**Date:** _06/2020 @ ETH-Zurich_
+**Version:** _2.0.0_
 
 ## Introduction
 The **HOST** picker is a **H**igh-**O**rder-**ST**atistics based picker.

@@ -163,7 +163,7 @@ def test_work_singlewin_kurt_aic():
     #
     for _kk, _pp in pickTime_UTC.items():
         if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
-            errors.append("wrong KEY for pick %s", _kk)
+            errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -207,7 +207,7 @@ def test_work_multiwin_skew_aic():
     #
     for _kk, _pp in pickTime_UTC.items():
         if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
-            errors.append("wrong KEY for pick %s", _kk)
+            errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -221,7 +221,8 @@ def test_work_singlewin_skew_aic():
     errors = []
     #
     st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    st.trim(#UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:03.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
@@ -229,18 +230,19 @@ def test_work_singlewin_skew_aic():
                   0.7,
                   channel="*Z",
                   hos_method="skewness",
-                  transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
+                  transform_cf={'transform_f2': {}, 'transform_f3': {}},
+                                #'transform_f4': {'window_type': 'hanning'}},
                   detection_method="aic",
                   diff_gauss_thresh=None)
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
-    HP.work(debug_plot=False)
+    HP.work(debug_plot=True)
     pickTime_UTC = HP.get_picks_UTC()
     ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000),
                      'median': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000)}
+    import pprint; pprint.pprint(pickTime_UTC) # MB
 
     #
     if len(pickTime_UTC.keys()) != 3:
@@ -248,7 +250,7 @@ def test_work_singlewin_skew_aic():
     #
     for _kk, _pp in pickTime_UTC.items():
         if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
-            errors.append("wrong KEY for pick %s", _kk)
+            errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
