@@ -10,17 +10,12 @@ from host import errors as HE
 logger = logging.getLogger(__name__)
 
 
-def plot_HOST(trace,
-              hos_arr,
-              eval_fun,
-              pickTime_UTC,
+def plot_HOST(hostobj,
               normalize=True,
               plot_ax=None,
               axtitle="HOST picks",
               shift_cf=False,
-              plot_HOS=False,
-              plot_EVAL=False,
-              plot_intermediate_PICKS=False,
+              debug_plot=False,
               plot_final_PICKS=True,
               plot_additional_PICKS={},
               show=False):
@@ -32,6 +27,13 @@ def plot_HOST(trace,
     hos_arr, eval_fun, hos_idx, pickTime_UTC must be HOST's dicts
 
     """
+
+    trace = hostobj.tr
+    hos_arr = hostobj.hos_arr
+    eval_fun = hostobj.eval_fun
+    pickTime_UTC = hostobj.pickTime_UTC
+    detection = hostobj.detection     # gauss / minima / aic
+
     if not isinstance(trace, Trace):
         raise HE.BadInstance({"message":
                               "Please input a valid obspy.core.Trace object"})
@@ -41,8 +43,10 @@ def plot_HOST(trace,
         raise HE.BadInstance({"message":
                               "Positional parameter (apart from trace) " +
                               "must be a dict object"})
+
     if not plot_ax:
-        inax = plt.axes()
+        fig = plt.figure()
+        inax = fig.add_subplot(111)
     else:
         inax = plot_ax
 
@@ -52,7 +56,7 @@ def plot_HOST(trace,
     if normalize:
         td = HS._normalize_trace(td, rangeVal=[-1, 1])
 
-    # -------------------------- Create Colors
+    # ============================ Create Colors
 
     my_color_list = ['sandybrown',
                      'deepskyblue',
@@ -63,18 +67,37 @@ def plot_HOST(trace,
                      'pink',
                      'grey',
                      'violet',
-                     'brown']
+                     'brown',
+                     'green',
+                     'darkred',
+                     'black',  # ]
+                     # Extreme cases
+                     'sandybrown',
+                     'deepskyblue',
+                     'navy',
+                     'darkorchid',
+                     'lightseagreen',
+                     'red',
+                     'pink',
+                     'grey',
+                     'violet',
+                     'brown',
+                     'green',
+                     'darkred',
+                     'black']
 
-    # -------------------------- Loop over dicts
-    # HOS:
-    if plot_HOS:
+    # ============================ Loop over dicts (DEBUG)
+
+    if debug_plot:
+        # HOS:
         for _ii, (_kk, _aa) in enumerate(hos_arr.items()):
             if normalize:
                 _aa = HS._normalize_trace(_aa, rangeVal=[0, 1])
-            zeropad = len(td) - len(_aa)
+            zeropad_start = tv.size - _aa.size
             #
-            if shift_cf:
-                inax.plot(tv, np.pad(_aa, (zeropad, 0), mode='constant',
+            if shift_cf and isinstance(shift_cf, (int, float)):
+                inax.plot(tv, np.pad(_aa, (zeropad_start, 0),
+                                     mode='constant',
                                      constant_values=(np.nan,)) +
                                     (_ii+1)*shift_cf,
                           color=my_color_list[_ii],
@@ -82,30 +105,45 @@ def plot_HOST(trace,
                           linestyle='-.',
                           label=_kk+" HOS")
             else:
-                inax.plot(tv, np.pad(_aa, (zeropad, 0), mode='constant',
+                inax.plot(tv, np.pad(_aa, (zeropad_start, 0),
+                                     mode='constant',
                                      constant_values=(np.nan,)),
                           color=my_color_list[_ii],
                           linewidth=1,
                           linestyle='-.',
                           label=_kk+" HOS")
 
-    # EVAL:
-    if plot_EVAL:
+        # EVAL:
         for _ii, (_kk, _aa) in enumerate(eval_fun.items()):
             # GoingToC: replace INFs/NANs at the start and end with
             #           adiacent values for plotting reasons.
             #           This is introduced mainly for AIC EVAL.
             #           It will not affect GAUSSIAN-EVAL as well
-            zeropad_start = td.size - _aa.size - 1
-            _aa[0] = _aa[1]
-            _aa[-1] = _aa[-2]
-            _tt = _aa[~np.isnan(_aa)]
-            _tt = _tt[~np.isinf(_aa)]
-            zeropad_end = _aa.size - _tt.size + 1
-            if normalize:
-                _aa = HS._normalize_trace(_tt, rangeVal=[0, 1])
+            if detection.lower() == "aic":
+                N = _aa.size
+                zeropad_start = tv.size - N - 1
+                _zpl = 0
+                for _dd in range(0, _aa.size):
+                    if np.isnan(_aa[_dd]) or np.isinf(_aa[_dd]):
+                        _zpl += 1
+                    else:
+                        break
+
+                _aa = _aa[~np.isnan(_aa)]
+                _aa = _aa[~np.isinf(_aa)]
+                Nnew = _aa.size
+
+                zeropad_start = zeropad_start + _zpl
+                zeropad_end = tv.size - Nnew - zeropad_start
+                if normalize:
+                    _aa = HS._normalize_trace(_aa, rangeVal=[0, 1])
+            else:
+                zeropad_start = td.size - _aa.size
+                zeropad_end = 0
+                if normalize:
+                    _aa = HS._normalize_trace(_aa, rangeVal=[0, 1])
             #
-            if shift_cf:
+            if shift_cf and isinstance(shift_cf, (int, float)):
                 inax.plot(tv, np.pad(_aa, (zeropad_start, zeropad_end), mode='constant',
                                      constant_values=(np.nan,)) +
                                     (_ii+1)*shift_cf,
@@ -121,9 +159,8 @@ def plot_HOST(trace,
                           linestyle=':',
                           label=_kk+" EVAL")
 
-    # PICKS intermediate:
-    col_idx = 0
-    if plot_intermediate_PICKS:
+        # PICKS intermediate:
+        col_idx = 0
         for _kk, _pp in pickTime_UTC.items():
             if _kk not in ('mean', 'median'):
                 inax.axvline(_pp - trace.stats.starttime,
@@ -132,7 +169,7 @@ def plot_HOST(trace,
                              label=_kk+" PICK")
                 col_idx += 1
 
-    # PICKS additional:
+    # ============================ PICKS additional:
     my_color_list_add = ['lime',
                          'forestgreen',
                          'limegreen',
@@ -146,20 +183,20 @@ def plot_HOST(trace,
                          label=_kk)
             col_idx += 1
 
-    # PICKS final:
+    # ============================ PICKS final:
     if plot_final_PICKS:
         inax.axvline(pickTime_UTC['mean'] - trace.stats.starttime,
                      color="gold",
                      linestyle="-",
-                     linewidth=2,
+                     linewidth=2.5,
                      label="mean PICK")
         inax.axvline(pickTime_UTC['median'] - trace.stats.starttime,
                      color="teal",
                      linestyle="-",
-                     linewidth=2,
+                     linewidth=3,
                      label="median PICK")
 
-    # -------------------------- Plot TRACE
+    # ============================ Plot TRACE
     inax.plot(tv, td, "k", label="trace")
     inax.set_xlabel("time (s)")
     inax.set_ylabel("counts")
@@ -169,4 +206,7 @@ def plot_HOST(trace,
         plt.tight_layout()
         plt.show()
     #
-    return inax
+    if not plot_ax:
+        return (fig, inax)
+    else:
+        return inax

@@ -89,8 +89,7 @@ class Host(object):
                  channel="*Z",
                  hos_method="kurtosis",
                  transform_cf={},
-                 detection_method="aic",
-                 diff_gauss_thresh=None):
+                 detection_method="aic"):
 
         # stream checks
         if isinstance(stream, Stream):
@@ -121,14 +120,21 @@ class Host(object):
             raise HE.BadParameterValue()
 
         # detection method checks
-        if detection_method.lower() in ('aic', 'akaike', 'a'):
+        if (isinstance(detection_method, str) and
+           detection_method.lower() in ('aic', 'akaike', 'a')):
             self.detection = "aic"
             self.thresh = None
-        elif detection_method.lower() in ('diff', 'gauss'):
-            self.detection = "diff"
-            self.thresh = diff_gauss_thresh
+        elif (isinstance(detection_method, (list, tuple)) and
+              detection_method[0].lower() in ('diff', 'gauss')):
+            self.detection = "gauss"
+            self.thresh = detection_method[1]
+        elif (isinstance(detection_method, str) and
+              detection_method.lower() in ('min', 'minima')):
+            self.detection = "minima"
+            self.thresh = None
         else:
-            logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
+            logger.error("DETECTION method Not valid !"
+                         "['aic', 'gauss', 'minima']")
             raise HE.BadParameterValue()
 
         if transform_cf:
@@ -196,7 +202,7 @@ class Host(object):
                 for _kk, _vv in self.tr_cf.items():
                     logger.debug("Transform HOST CF: %s" % _kk)
                     call_funct = getattr(HS, _kk.lower())
-                    if _kk.lower() == 'transform_f4':
+                    if _kk.lower() == 'transform_smooth':
                         outarr = call_funct(outarr, num_sample, **_vv)
                     else:
                         outarr = call_funct(outarr, **_vv)
@@ -231,9 +237,12 @@ class Host(object):
         elif self.detection.lower() in ('aic', 'akaike'):
             hos_idx, eval_fun = HS.AICcf(hos_arr)
 
+        elif self.detection.lower() in ('min', 'minima'):
+            hos_idx, eval_fun = HS.detect_minima(hos_arr)
+
         else:
             logger.error("!WEIRD! Invalid pick extr. mode: %s " +
-                         "['aic'; 'diff'/'gauss']" % self.detection)
+                         "['aic', 'gauss', 'minima']" % self.detection)
             raise HE.BadParameterValue()
         #
         return hos_idx, eval_fun
@@ -306,35 +315,23 @@ class Host(object):
                          "iterable or float/int")
             raise HE.BadParameterValue()
 
-        if debug_plot:
-            HPL.plot_HOST(self.tr,
-                          _hos,
-                          _eval,
-                          _pt_UTC,
-                          normalize=True,
-                          plot_ax=None,
-                          axtitle="HOST picks",
-                          shift_cf=False,
-                          plot_HOS=True,
-                          plot_EVAL=True,
-                          plot_intermediate_PICKS=True,
-                          plot_final_PICKS=True,
-                          show=True)
-
         # Store results in the class attribute
         self.pickTime_UTC = _pt_UTC
         self.hos_arr = _hos
         self.eval_fun = _eval
         self.hos_idx = _hos_idx
 
+        if debug_plot:
+            _ = HPL.plot_HOST(self,
+                              normalize=True,
+                              debug_plot=True,
+                              plot_final_PICKS=True,
+                              axtitle="HOST picks",
+                              show=True)
+
     def plot(self, **kwargs):
         """ Class wrapper for plotting the data of HOST """
-        outax = HPL.plot_HOST(self.tr,
-                              self.hos_arr,
-                              self.eval_fun,
-                              self.pickTime_UTC,
-                              **kwargs,
-                              show=True)
+        outax = HPL.plot_HOST(self, **kwargs, show=True)
         return outax
 
     # ============================== Getter / Setter methods
@@ -384,4 +381,3 @@ class Host(object):
             self.thresh = threshold
         else:
             self.thresh = None
-

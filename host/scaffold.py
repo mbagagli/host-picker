@@ -34,12 +34,6 @@ myclib.aicp.argtypes = [np.ctypeslib.ndpointer(
 # =====================================================
 
 
-def _abort():
-    """ Force current Python shell to close, use it wisely """
-    import sys
-    sys.exit()
-
-
 def _normalize_trace(workList, rangeVal=[-1, 1]):
     ''' This simple method will normalize the trace between rangeVal.
         Simply by scaling everything...
@@ -153,10 +147,12 @@ def transform_f3(inarr):
         raise HE.BadInstance()
     #
     from scipy.signal import detrend
-    return detrend(inarr)
+    outa = detrend(inarr)
+    outa = outa - outa[0]  # bring first sample to 0
+    return outa
 
 
-def transform_f4_final(inarr):
+def transform_f4(inarr):
     """Pushing Down local minima
 
     It's equal to transformation num 4 from
@@ -167,11 +163,24 @@ def transform_f4_final(inarr):
         logger.error("The input vector should be a numpy array type")
         raise HE.BadInstance()
     #
-    from scipy.signal import detrend
-    return detrend(inarr)
+    Tk = [inarr[_xx] - np.max([inarr[_xx], inarr[_xx+1]])
+          for _xx in range(0, (inarr.size-1))]
+    F4 = [_ii if _ii <= 0.0 else 0.0 for _ii in Tk]
+    F4 = np.append(F4, F4[-1])
+    return np.array(F4)
 
 
-def transform_f4(inarr, smooth_win, window_type='hanning'):
+def transform_f5(inarr, power=2.0):
+    """Elevate each single value in the array to the specified power
+    """
+    if not isinstance(inarr, np.ndarray):
+        logger.error("The input vector should be a numpy array type")
+        raise HE.BadInstance()
+    #
+    return inarr**power
+
+
+def transform_smooth(inarr, smooth_win, window_type='hanning'):
     """Simple smoothing of the CF to better extract  the main transient.
 
     smooth_win is in SAMPLE!
@@ -184,16 +193,6 @@ def transform_f4(inarr, smooth_win, window_type='hanning'):
     if smooth_win % 2 == 0:
         smooth_win += 1
     return _smooth(inarr, window_len=smooth_win, window=window_type)
-
-
-def transform_f5(inarr, power=2.0):
-    """Elevate each single value in the array to the specified power
-    """
-    if not isinstance(inarr, np.ndarray):
-        logger.error("The input vector should be a numpy array type")
-        raise HE.BadInstance()
-    #
-    return inarr**power
 
 
 def gauss_dev(inarr, thr):
@@ -211,20 +210,14 @@ def gauss_dev(inarr, thr):
     try:
         return all_idx[0] - 1, m, s, all_idx, hos_arr_diff
     except IndexError:
-        print("son dentro IN")
         raise HE.PickNotFound()
 
 
-def normalize_and_select(inarr, thr):
+def detect_minima(inarr):
+    """ Simply return the INDEX POSITION of the minimum value
+        for the given array
     """
-    From this function, we expect to find the first arrival
-    statistical distribution, and then operate with the mean/std
-    threshold for detection of first arrival.
-    """
-    mydiff = np.diff(inarr)
-    mydiff_norm = _normalize_trace(mydiff, rangeVal=[0, 1])
-    all_idx = np.where(mydiff_norm >= thr)[0]
-    return all_idx[0] - 1, mydiff_norm, all_idx
+    return np.argmin(inarr), inarr
 
 
 def AICcf(td):

@@ -2,4 +2,4 @@
 
 AUTHOR = "Matteo Bagagli @ ETH-Zurich"
 DATE = "06/2020"
-VERSION = "2.0.0"
+VERSION = "2.1.0"

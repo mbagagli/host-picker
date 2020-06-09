@@ -35,8 +35,7 @@ def test_init():
                   transform_cf={'transform_f2': {},
                                 'transform_f4': {'windowtype': 'hanning'},
                                 'transform_f5': {'power': 2}},
-                  detection_method="aic",
-                  diff_gauss_thresh=None)
+                  detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
@@ -52,8 +51,7 @@ def test_setter():
                   0.6,
                   channel="*Z",
                   hos_method="kurtosis",
-                  detection_method="aic",
-                  diff_gauss_thresh=None)
+                  detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
@@ -102,20 +100,19 @@ def test_work_multiwin_kurt_aic():
                   channel="*Z",
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="aic",
-                  diff_gauss_thresh=None)
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
                      '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
-                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 640000),
-                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 590000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 668000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 672000),
                      'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000)}
     #
     if len(pickTime_UTC.keys()) != 7:
@@ -146,17 +143,16 @@ def test_work_singlewin_kurt_aic():
                   channel="*Z",
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="aic",
-                  diff_gauss_thresh=None)
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 8, 100000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 8, 100000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 8, 100000)}
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000)}
     #
     if len(pickTime_UTC.keys()) != 3:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -186,21 +182,20 @@ def test_work_multiwin_skew_aic():
                   channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="aic",
-                  diff_gauss_thresh=None)
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 810000),
-                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 840000),
-                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 860000),
-                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 890000),
-                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 910000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 862000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 860000)}
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000)}
     #
     if len(pickTime_UTC.keys()) != 7:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -221,8 +216,7 @@ def test_work_singlewin_skew_aic():
     errors = []
     #
     st = stproc.copy()
-    st.trim(#UTCDateTime("2009-08-24T00:20:06.500000"),
-            UTCDateTime("2009-08-24T00:20:03.500000"),
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
@@ -230,20 +224,17 @@ def test_work_singlewin_skew_aic():
                   0.7,
                   channel="*Z",
                   hos_method="skewness",
-                  transform_cf={'transform_f2': {}, 'transform_f3': {}},
-                                #'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="aic",
-                  diff_gauss_thresh=None)
+                  transform_cf={'transform_f2': {},
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
-    HP.work(debug_plot=True)
+    HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 8, 110000)}
-    import pprint; pprint.pprint(pickTime_UTC) # MB
-
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000)}
     #
     if len(pickTime_UTC.keys()) != 3:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -273,17 +264,16 @@ def test_work_singlewin_skew_diff():
                   channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="diff",
-                  diff_gauss_thresh=0.5)
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 500000)}
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000)}
     #
     if len(pickTime_UTC.keys()) != 3:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -313,21 +303,20 @@ def test_work_multiwin_skew_diff():
                   channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="diff",
-                  diff_gauss_thresh=0.5)
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 650000),
-                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
-                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
-                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
-                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 600000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 458000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000)}
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000)}
     #
     if len(pickTime_UTC.keys()) != 7:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -356,21 +345,20 @@ def test_transform_cf():
                   channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'window_type': 'hanning'}},
-                  detection_method="diff",
-                  diff_gauss_thresh=0.5)
+                                'transform_smooth': {'window_type': 'hanning'}},
+                  detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 650000),
-                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
-                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
-                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
-                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 600000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 458000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000)}
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000)}
     #
     if len(pickTime_UTC.keys()) != 7:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -380,3 +368,42 @@ def test_transform_cf():
             errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_singlewin_kurt_min():
+    """ Test the HOST picking algorithm for:
+       - KURTOSIS
+       - SINGLEWIN
+       - MIN
+    """
+    errors = []
+    #
+    st = stproc.copy()
+    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.500000"))
+    #
+    try:
+        HP = Host(st,
+                  0.7,
+                  channel="*Z",
+                  hos_method="kurtosis",
+                  transform_cf={'transform_f2': {}, 'transform_f3': {}, 'transform_f4': {}},
+                  detection_method="min")
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000)}
+    #
+    if len(pickTime_UTC.keys()) != 3:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s" % _kk)
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
