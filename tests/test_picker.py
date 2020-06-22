@@ -1,7 +1,5 @@
 from host.picker import Host
 from obspy import read, UTCDateTime
-import pprint
-import sys
 
 
 def miniproc(st):
@@ -406,4 +404,3 @@ def test_work_singlewin_kurt_min():
             errors.append("wrong KEY for pick %s" % _kk)
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
-
