@@ -2,4 +2,4 @@
 
 __author__ = "Matteo Bagagli @ ETH-Zurich"
 __date__ = "06/2020"
-__version__ = "2.1.1"
+__version__ = "2.1.2"

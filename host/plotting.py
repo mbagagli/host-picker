@@ -115,6 +115,8 @@ def plot_HOST(hostobj,
 
         # EVAL:
         for _ii, (_kk, _aa) in enumerate(eval_fun.items()):
+            if detection.lower() == "minima":
+                continue
             # GoingToC: replace INFs/NANs at the start and end with
             #           adiacent values for plotting reasons.
             #           This is introduced mainly for AIC EVAL.
