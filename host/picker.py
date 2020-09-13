@@ -343,7 +343,7 @@ class Host(object):
         return self.hos_arr
 
     def get_eval_functions(self):
-        return self.eval_arr
+        return self.eval_fun
 
     def get_picks_index(self):
         return self.hos_idx
