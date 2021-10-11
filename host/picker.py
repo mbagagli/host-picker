@@ -3,7 +3,7 @@ import numpy as np
 import pathlib
 import ctypes as C
 #
-from obspy.core import Stream
+from obspy.core import Trace
 from obspy.core import UTCDateTime
 #
 from host import errors as HE
@@ -13,12 +13,13 @@ from host import scaffold as HS
 logger = logging.getLogger(__name__)
 
 
-"""Main picker module of HOST picking algorithm
+""" Main HOST picking algorithm module
 
-In this module are stored all the functions and classes needed to pick
-with HOS algorithms (skewness/kurtosis).
+Here are stored all the functions and classes needed to pick
+with Higher-Order-Statistics algorithms (skewness/kurtosis).
 
-For a detailed explanation of the usage, the user should look the docs.
+For a detailed explanation of the usage and example, the user is
+referred to the Jupyter notebooks contained in `books` subdir.
 
 """
 
@@ -71,37 +72,56 @@ myclib.skewcf_mean.argtypes = [np.ctypeslib.ndpointer(
 
 
 class Host(object):
-    """Main class for high horder statistics picker
+    """ Main class for the High Order STatistics picker
 
     This class contains all the necessary parameter to run the picker
     and defining the obtained pick
 
+    Args:
+        stream (obspy.core.Stream): obspy stream object containing the
+            interested traces
+        time_windows (int, float, list, tuple): can be either a single
+            time window (in seconds) or a series of them. This time
+            window represent the window of analysis for the HOS-CF
+            calculations.
+        hos_method (str): The basic characteristic function to use. It
+            be either `'kurtosis' ['kurt', 'k']` (default) or
+            `'skewness' ['skew', 's']`
+        transform_cf (dict): Dictionary containing all the necessary
+            transformation functions for the CF. For a full list and
+            exaples, please check the jupyter notebook tutorials under
+            the `book` subdir.
+        detection_method (str): pick declaration method. Either
+            `'aic' ['akaike', 'a']` (default), `'diff' ['gauss']`, or
+            `'min' ['minima']`. For example of usage, please check the
+            jupyter notebook tutorials under the `book` subdir.
+
     Note:
-        The !WEIRD! error message are raised when the __init__ method
-        fails on detecting erroneous input parameter. In fact these
-        WEIRD error are raised from internal functions after some
-        IF switches.
+        The `time_window` instance will be transformed internally into
+        class attribute of type `list` or `tuple`.
+
+    Warning:
+        The private methods are ment for developers only! Please
+        refer to the public ones instead. Unexpected behavior may occur.
 
     """
     def __init__(self,
-                 stream,
+                 trace,
                  time_windows,
-                 channel="*Z",
                  hos_method="kurtosis",
                  transform_cf={},
                  detection_method="aic"):
 
         # stream checks
-        if isinstance(stream, Stream):
-            self.st = stream
-            self.tr = stream.select(channel=channel)[0]
+        if isinstance(trace, Trace):
+            self.tr = trace.copy()
             self.dt = self.tr.stats.delta
             self.ts = self.tr.data
         else:
-            logger.error("Not a valid ObsPy Stream instance")
+            logger.error("Not a valid ObsPy Trace instance")
             raise HE.BadInstance()
 
-        # sliding windows checks
+        # sliding windows checks -->
         if isinstance(time_windows, (float, int)):
             self.time_win = (time_windows,)
         elif isinstance(time_windows, (list, tuple)):
@@ -142,22 +162,43 @@ class Host(object):
         else:
             self.tr_cf = None
 
-        # Initialize output
+        # Initialize output attributes
         self.pickTime_UTC = {}
+        self.pickTime_error = {}
         self.hos_arr = {}
         self.eval_fun = {}
         self.hos_idx = {}
+        self.work_picks = {}
 
-    # ============================== Private methods
+    # ====================================== PRIVATE methods
+    # ======================================================
+
     def _preprocess(self):
-        """Minimal precprocessing method:
-          - remove mean
-          - remove linear trend
+        """ Private method: minimal preprocessing
+
+        This class-method performs a de-mean and a linear de-trend to
+        the active/seleceted trace in the stream. This is needed for the
+        0-mean assumption of HOS based picker and therefore their CF
+        calculation.
+
         """
         self.tr.detrend('demean')
         self.tr.detrend('simple')
 
     def _calculate_CF(self, tw):
+        """ Private method: calculate the carachteristic function
+
+        This method-class is a wrapper for calling the C-routines
+        for either kurtosis and skewness.
+
+        Args:
+            tw (float): time window in seconds for HOS-CF calculations
+
+        Returns:
+            hos_arr (numpy.ndarray): trace HOS-CF
+            N (int): length of the CF
+
+        """
         if self.ts.size == 0:
             logger.error("Missing trace time series data ... abort")
             raise HE.MissingAttribute()
@@ -166,6 +207,7 @@ class Host(object):
                           " IN: %f - DELTA: %f ") % (float(tw),
                                                      float(self.dt)))
             raise HE.BadParameterValue()
+
         # --- Calculate CF
         logger.debug("Calculating CF with HOS: %s" % self.method.upper())
         N = round(tw/self.dt) + 1
@@ -191,9 +233,15 @@ class Host(object):
         return hos_arr, N
 
     def _transform_cf(self, inarr, num_sample):
-        """ This private method will take care of the transformation
-            of the HOST CF function to better increase the signal/noise
-            ratio and therefore leading to a better pick detection.
+        """ Modify the CF array.
+
+        This private method will take care of the transformation
+        of the HOST CF function to better increase the signal/noise
+        ratio and therefore leading to a better pick detection.
+
+        Args:
+            inarr (numpy.ndarray): the HOS-CF array
+            num_sample (int): number of samples for smoothing window
 
         """
         if isinstance(inarr, np.ndarray) and inarr.size != 0:
@@ -216,8 +264,14 @@ class Host(object):
         return outarr
 
     def _detect_pick(self, hos_arr):
-        """Use one of the possible method to detect the pick over an
-           HOS carachteristic function.
+        """ Use the evalutation functions to declare picks
+
+        Use one of the possible method to detect the pick over an
+        HOS carachteristic function.
+
+        Args:
+            hos_arr (numpy.ndarray): the HOS-CF array (already
+                transformed)
 
         """
         logger.debug("Detecting PICK with %s" % self.detection.upper())
@@ -247,14 +301,129 @@ class Host(object):
         #
         return hos_idx, eval_fun
 
-    # ============================== Public methods
+    def _snratio(self, pick_time, noise_win, signal_win):
+        """ Using signal-to-noise ratio to define pick error
 
-    def pick(self, tw):
-        """ This method will calculate first the CF, and then
-            detect the pick.
+        This method will calculate and report the signal-to-noise ratio
+        as an indicator of the pick quality.
+        In order to mitigate spiky traces, the noise value will be
+        set as 2*std(noise). Also to mitigate spikes, the signal value
+        will be estimated as the mean value among the absolute maximum
+        and minimum of the data contained into the window.
+
+        Note:
+            This method is called only when a single pick (or evaluation
+            window) is given. If multi-window approach is adopted, the
+            pick-error will be evaluated via the jack-knife statistical
+            approach.
+
+        Args:
+            pick_time (UTCDateTime): reference time for time-windows
+                selection
+            noise_win (int, float): seconds of noise window duration
+            signal_win (int, float): seconds of signal window duration
+
+        Returns:
+            s2nr (float): the signal to noise ratio
 
         """
+        nw = self.tr.slice(pick_time-noise_win, pick_time)
+        sw = self.tr.slice(pick_time, pick_time+signal_win)
+        #
+        nv = np.std(nw.data)*2
+        sv = (np.max(sw.data) + np.abs(np.min(sw.data))) / 2
+        #
+        s2nr = sv/nv
 
+        # -- Round Error
+        # trick/workaround to properly round  XXX.5 to XXX+1.0  (MB)
+        # numpy e python round to the NEAREST EVEN number (i.e. 2.5 --> 2)
+        s2nr += 0.00111
+        s2nr = np.round(s2nr, 2)
+
+        return s2nr
+
+    def _jk(self, indict):
+        """ Using jack-knife to define outliers and error
+
+        This method discriminate between valid and outlier observations,
+        and asses the pick-error as the time span among the valid-picks.
+
+        Args:
+            indict (dict): dictionary containing the datetime seconds
+                of each pick (floats). The respective key represents
+                the evaluation window length (in seconds)
+
+        Returns:
+            pick_error (float): uncertainty window in seconds
+            valid_obs_dict (dict): contains the **sorted** valid
+                observations as UTCDateTime object
+            outliers_dict (dict): contains the **sorted** outlier
+                observations as UTCDateTime object
+
+        """
+        valid_obs = []    # will be transformed in dict for output
+        outliers = []     # will be transformed in dict for output
+        replicates = {}
+        #
+        orig_mean = np.mean(tuple(indict.values()))
+        # kk is the LEFT OUT obs
+        for kk, vv in indict.items():
+            ta = [indict[i] for i in indict.keys() if i != kk]
+            replicates[kk] = {'mean': np.mean(ta),
+                              'bias': np.mean(ta) - orig_mean
+                              }
+
+        # Standard deviation of residuals (BIAS)
+        jkn_bias_std = np.std([vv['bias'] for kk, vv in replicates.items()])
+
+        for kk, vv in replicates.items():
+            if not np.abs(vv['bias']) >= 2*jkn_bias_std:
+                # It's a valid observation
+                valid_obs.append((kk, indict[kk]))
+            else:
+                # It's a complete outlier
+                outliers.append((kk, indict[kk]))
+
+        # -- Calc Error
+        _only_valid = [_t[1] for _t in valid_obs]
+        pick_error = np.max(_only_valid) - np.min(_only_valid)
+
+        # -- Round Error
+        # trick/workaround to properly round  XXX.5 to XXX+1.0  (MB)
+        # numpy e python round to the NEAREST EVEN number (i.e. 2.5 --> 2)
+        pick_error += 0.00111
+        pick_error = np.round(pick_error, 2)
+
+        # Now valid Obs and Outlier could be DICT
+        valid_obs_dict = dict(sorted(valid_obs, key=lambda x: x[1]))
+        valid_obs_dict = {k: UTCDateTime(v) for k, v in valid_obs_dict.items()}
+
+        outliers_dict = dict(sorted(outliers, key=lambda x: x[1]))
+        outliers_dict = {k: UTCDateTime(v) for k, v in outliers_dict.items()}
+
+        return pick_error, valid_obs_dict, outliers_dict
+
+    def _pick(self, tw):
+        """ Private method extracting picks
+
+        This class method is called by the `work` method. It first
+        calculate the CF, and eventually detect the first arrival.
+
+        Args:
+            tw (float): time window in seconds for HOS-CF calculations
+
+        Returns:
+            pickTime_UTC (float): UTC time-float of the pick. Having
+                a float in return is necessary for further statistical
+                calculation. The conversion will occur inside the
+                calling method
+            hos_arr (numpy.ndarray): array of the calculated CF
+            eval_fun (numpy.ndarray): array of the evaluation function
+                adopted to declare the pick
+            hos_idx (int): index of the CF declared pick
+
+        """
         # ======================== Calculate CF
         hos_arr, N = self._calculate_CF(tw)
 
@@ -271,15 +440,27 @@ class Host(object):
                                                           self.detection,
                                                           hos_idx+N))
         pickTime_UTC = self.tr.stats.starttime + ((hos_idx+N) * self.dt)
-        #
+        # Returning float is necessary to calculate MEAN, MEDIAN and ERR
         return float(pickTime_UTC), hos_arr, eval_fun, (hos_idx+N)
 
-    def work(self, debug_plot=False):
+    # ====================================== PUBLIC methods
+    # ======================================================
+
+    def work(self, debug_plot=False, noise_win=1.0, signal_win=1.0):
         """Main public method to run the picking algotrithm
 
-        If the  time_win attributes is a set of values the output will
-        be given in a dictionary containing as keys the diferent
-        time windows values
+        This represent the core method for the Host class. In order,
+        it will calculate
+
+        Optional:
+            noise_win (int, float): noise window length (in seconds)
+                used to assess the signal to noise ration/
+            debug_plot (bool): if True, the method will return a
+                floating, interactive figure with the picking results
+
+        Note:
+            The noise_win and signal_win options will be used by the
+            `_snratio` method only when a single-window is used.
 
         """
         # Check time windows
@@ -294,21 +475,30 @@ class Host(object):
                 (_pt_float[str(tw)],
                  _hos[str(tw)],
                  _eval[str(tw)],
-                 _hos_idx[str(tw)]) = self.pick(tw)
+                 _hos_idx[str(tw)]) = self._pick(tw)
             #
             meanUTC = UTCDateTime(np.array(list(_pt_float.values())).mean())
             medianUTC = UTCDateTime(np.median(
                             np.array(list(_pt_float.values()))))
             _pt_UTC['mean'] = meanUTC
             _pt_UTC['median'] = medianUTC
+
             # Convert floats into UTCDateTime
             for _kf, _vf in _pt_float.items():
                 if _kf not in ('mean', 'median'):
                     _pt_UTC[_kf] = UTCDateTime(_vf)
 
-        elif isinstance(self.time_win, (float, int)):
-            _pt_float, _hos, _eval, _hos_idx = self.pick(self.time_win)
-            _pt_UTC = UTCDateTime(_pt_float)
+            # === Declare the error
+            if len(self.time_win) >= 2:
+                (_pt_UTC['pick_error'],
+                 _pt_UTC['valid_obs'],
+                 _pt_UTC['outlier_obs']) = self._jk(_pt_float)
+            else:
+                _pt_UTC['pick_error'] = self._snratio(
+                    _pt_UTC[str(self.time_win[0])], noise_win, signal_win)
+                _pt_UTC['valid_obs'] = {
+                    str(self.time_win[0]): _pt_UTC[str(self.time_win[0])]}
+                _pt_UTC['outlier_obs'] = {}
 
         else:
             logger.error("Parameter time_windows should be either " +
@@ -325,7 +515,7 @@ class Host(object):
             _ = HPL.plot_HOST(self,
                               normalize=True,
                               debug_plot=True,
-                              plot_final_PICKS=True,
+                              plot_final_picks=True,
                               axtitle="HOST picks",
                               show=True)
 
@@ -334,7 +524,7 @@ class Host(object):
         outax = HPL.plot_HOST(self, **kwargs, show=True)
         return outax
 
-    # ============================== Getter / Setter methods
+    # ------------- Getter / Setter methods
 
     def get_picks_UTC(self):
         return self.pickTime_UTC
@@ -372,6 +562,8 @@ class Host(object):
             self.detection = "aic"
         elif method.lower() in ('diff', 'gauss'):
             self.detection = "diff"
+        elif method.lower() in ('min', 'minima'):
+            self.detection = "min"
         else:
             logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
             raise HE.BadParameterValue()

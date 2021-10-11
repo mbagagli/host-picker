@@ -7,12 +7,13 @@ from host import errors as HE
 
 logger = logging.getLogger(__name__)
 
-"""HOST scaffold module
+""" HOST scaffold module
 
 In this module are contained all the necessary functions
 that let the picking algorithm work.
 
-Most of them are needed to calculate the CF and process it.
+Most of them are needed to transform the CF for a better
+recognition of arrival times (pick)
 
 """
 
@@ -34,22 +35,32 @@ myclib.aicp.argtypes = [np.ctypeslib.ndpointer(
 # =====================================================
 
 
-def _normalize_trace(workList, rangeVal=[-1, 1]):
-    ''' This simple method will normalize the trace between rangeVal.
-        Simply by scaling everything...
-        *** INPUT MUST BE A list/tuple object
+def _normalize_trace(work_list, rangeVal=[-1, 1]):
+    """
 
-    '''
-    minVal = min(workList)
-    maxVal = max(workList)
-    workList[:] = [((x - minVal) / (maxVal - minVal)) *
-                   (rangeVal[1] - rangeVal[0]) for x in workList]
-    workList = workList + rangeVal[0]
-    return workList
+    This simple method will normalize the trace between rangeVal.
+    Simply by scaling everything...
+
+    Args:
+        work_list (list, tuple, numpy.ndarray): vector of values
+        range_val (list, tuple): interval of transformation
+
+    Returns:
+        work_list (list, tuple, numpy.ndarray): input vector of values,
+            trasnformed
+
+    """
+
+    minVal = min(work_list)
+    maxVal = max(work_list)
+    work_list[:] = [((x - minVal) / (maxVal - minVal)) *
+                    (rangeVal[1] - rangeVal[0]) for x in work_list]
+    work_list = work_list + rangeVal[0]
+    return work_list
 
 
 def _smooth(x, window_len=11, window='hanning'):
-    """smooth the data using a window with requested size.
+    """ Smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the
     signal. The signal is prepared by introducing reflected copies of
@@ -116,47 +127,65 @@ def _smooth(x, window_len=11, window='hanning'):
 # ====================================  TRANSFORM CF
 
 def transform_f2(inarr):
-    """It's equal to transformation num 2 from
-    http://www.ipgp.fr/~mangeney/Baillard_etal_bssa_2014
+    """ Stainr-like energy transformation
+
+    Similar to transformation num 2 from Baillard et al. 2014
+
+    Args:
+        inarr (numpy.ndarray): input values 1D vector
+
+    Returns:
+        F2 (numpy.ndarray): modified input
 
     """
     if not isinstance(inarr, np.ndarray):
         logger.error("The input vector should be a numpy array type")
         raise HE.BadInstance()
     #
-    b = np.zeros(inarr.size)
-    b[0] = inarr[0]
+    F2 = np.zeros(inarr.size)
+    F2[0] = inarr[0]
     for i in range(1, len(inarr)-1):
         if inarr[i+1]-inarr[i] >= 0:
-            b[i] = b[i-1] + inarr[i+1] - inarr[i]
+            F2[i] = F2[i-1] + inarr[i+1] - inarr[i]
         else:
-            b[i] = b[i-1]
-    b[-1] = b[-2]
-    return b
+            F2[i] = F2[i-1]
+    F2[-1] = F2[-2]
+    return F2
 
 
 def transform_f3(inarr):
-    """Removing linear trend
+    """ Removing linear trend
 
-    It's equal to transformation num 3 from
-    http://www.ipgp.fr/~mangeney/Baillard_etal_bssa_2014
+    Similar to transformation num 3 from Baillard et al. 2014
+
+    Args:
+        inarr (numpy.ndarray): input values 1D vector
+
+    Returns:
+        F3 (numpy.ndarray): modified input
 
     """
+
     if not isinstance(inarr, np.ndarray):
         logger.error("The input vector should be a numpy array type")
         raise HE.BadInstance()
     #
     from scipy.signal import detrend
-    outa = detrend(inarr)
-    outa = outa - outa[0]  # bring first sample to 0
-    return outa
+    F3 = detrend(inarr)
+    F3 = F3 - F3[0]  # bring first sample to 0
+    return F3
 
 
 def transform_f4(inarr):
-    """Pushing Down local minima
+    """ Pushing Down local minima
 
-    It's equal to transformation num 4 from
-    http://www.ipgp.fr/~mangeney/Baillard_etal_bssa_2014
+    Similar to transformation num 4 from Baillard et al. 2014
+
+    Args:
+        inarr (numpy.ndarray): input values 1D vector
+
+    Returns:
+        F4 (numpy.ndarray): modified input
 
     """
     if not isinstance(inarr, np.ndarray):
@@ -171,7 +200,19 @@ def transform_f4(inarr):
 
 
 def transform_f5(inarr, power=2.0):
-    """Elevate each single value in the array to the specified power
+    """ Elevate to power
+
+    Elevate to the power of N (default 2) each single value in the array
+
+    Args:
+        inarr (numpy.ndarray): input values 1D vector
+
+    Optional:
+        power (float): input power
+
+    Returns:
+        F5 (numpy.ndarray): modified input
+
     """
     if not isinstance(inarr, np.ndarray):
         logger.error("The input vector should be a numpy array type")
@@ -196,11 +237,25 @@ def transform_smooth(inarr, smooth_win, window_type='hanning'):
 
 
 def gauss_dev(inarr, thr):
-    """
+    """ Gaussian detector
+
     Assuming it's half gaussian we calculate the mean and std.
     We multiply the std with a std deviation with a threshold
+
+    Args:
+        inarr (numpy.ndarray): input values 1D vector
+        thr (float): detection threshold
+
+    Returns:
+        idx (int): index of pick detection
+        m (float): mean
+        s (float): standard deviation
+        all_idx (numpy.ndarray): array of indexes where threshold is
+            passed.
+        hos_arr_diff (numpy.ndarray): discrete first derivative of the
+            input array
+
     """
-    # hos_arr_diff = np.diff(inarr)
     hos_arr_diff = np.abs(np.diff(inarr))
     m = np.mean(hos_arr_diff)
     s = np.std(hos_arr_diff)
@@ -214,24 +269,32 @@ def gauss_dev(inarr, thr):
 
 
 def detect_minima(inarr):
-    """ Simply return the INDEX POSITION of the minimum value
-        for the given array
+    """ Simply return the INDEX POSITION of the minimum value and the
+        input array as well.
     """
     return np.argmin(inarr), inarr
 
 
-def AICcf(td):
-    """
+def AICcf(inarr):
+    """ Call fast C-routin of AIC carachteristic funtion
+
     This method will return the index of the minimum AIC carachteristic
     function.
 
-    td must be a  `numpy.ndarray`
+    Args:
+        inarr (numpy.ndarray): input values 1D vector
+        thr (float): detection threshold
+
+    Returns:
+        pminidx (int): index of absolute minima of AIC-CF
+        aicfn (numpy.ndarray): AIC carachteristic function array
+
     """
     pminidx = C.c_int()
-    tmparr = np.ascontiguousarray(td, np.float32)
-    aicfn = np.zeros(td.size - 1,
+    tmparr = np.ascontiguousarray(inarr, np.float32)
+    aicfn = np.zeros(inarr.size - 1,
                      dtype=np.float32, order="C")
-    ret = myclib.aicp(tmparr, td.size,
+    ret = myclib.aicp(tmparr, inarr.size,
                       aicfn, C.byref(pminidx))
     if ret != 0:
         raise MemoryError("Something wrong with AIC picker")

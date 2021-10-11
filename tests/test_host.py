@@ -1,5 +1,22 @@
+from numpy import isclose, array, ndarray
 from host.picker import Host
 from obspy import read, UTCDateTime
+from obspy.core.trace import Trace
+
+
+# ================================================   Preparing ...
+# =====================================================================
+
+def create_obspy_trace(data, stats):
+    """ It will return an ObsPy.Trace instance from give array and
+        stats dictionary
+    """
+    if not isinstance(data, ndarray):
+        raise TypeError("DATA must be a numpy.ndarray instance!")
+    if not isinstance(stats, dict):
+        raise TypeError("STATS must be a dict instance!")
+    #
+    return Trace(data=data, header=stats)
 
 
 def miniproc(st):
@@ -17,18 +34,19 @@ def miniproc(st):
 
 straw = read('./tests_data/obspy_read.mseed')
 stproc = miniproc(straw)
+trproc = stproc.select(channel="*Z")[0]
+
 
 # ================================================ Starting the tests
-
+# =====================================================================
 
 def test_init():
     """ Test the picker init method """
     errors = []
     #
     try:
-        HP = Host(stproc,
+        HP = Host(trproc,
                   0.6,
-                  channel="*Z",
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
                                 'transform_f4': {'windowtype': 'hanning'},
@@ -45,9 +63,8 @@ def test_setter():
     errors = []
     #
     try:
-        HP = Host(stproc,
+        HP = Host(trproc,
                   0.6,
-                  channel="*Z",
                   hos_method="kurtosis",
                   detection_method="aic")
     except TypeError:
@@ -88,14 +105,13 @@ def test_work_multiwin_kurt_aic():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   [0.1, 0.15, 0.2, 0.25, 0.3],
-                  channel="*Z",
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -111,14 +127,24 @@ def test_work_multiwin_kurt_aic():
                      '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 672000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+                     'outlier_obs': {},
+                     'pick_error': 0.07,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
+                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
+                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000)}}
     #
-    if len(pickTime_UTC.keys()) != 7:
-        errors.append("KEY numbers doesn't correspond, missins some")
+    if len(pickTime_UTC.keys()) != 10:
+        errors.append("KEY numbers doesn't correspond, missing some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -131,14 +157,13 @@ def test_work_singlewin_kurt_aic():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   0.7,
-                  channel="*Z",
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -150,9 +175,12 @@ def test_work_singlewin_kurt_aic():
     pickTime_UTC = HP.get_picks_UTC()
     ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
+                     'outlier_obs': {},
+                     'pick_error': 3.19,
+                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000)}}
     #
-    if len(pickTime_UTC.keys()) != 3:
+    if len(pickTime_UTC.keys()) != 6:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
@@ -170,14 +198,13 @@ def test_work_multiwin_skew_aic():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   [0.1, 0.15, 0.2, 0.25, 0.3],
-                  channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -193,14 +220,25 @@ def test_work_multiwin_skew_aic():
                      '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                     'outlier_obs': {},
+                     'pick_error': 0.02,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
+                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000)}}
+
     #
-    if len(pickTime_UTC.keys()) != 7:
+    if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -213,14 +251,13 @@ def test_work_singlewin_skew_aic():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   0.7,
-                  channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -232,14 +269,20 @@ def test_work_singlewin_skew_aic():
     pickTime_UTC = HP.get_picks_UTC()
     ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000),
+                     'outlier_obs': {},
+                     'pick_error': 3.19,
+                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 990000)}}
     #
-    if len(pickTime_UTC.keys()) != 3:
+    if len(pickTime_UTC.keys()) != 6:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -252,14 +295,13 @@ def test_work_singlewin_skew_diff():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   0.7,
-                  channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -271,14 +313,20 @@ def test_work_singlewin_skew_diff():
     pickTime_UTC = HP.get_picks_UTC()
     ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
+                     'outlier_obs': {},
+                     'pick_error': 39.06,
+                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000)}}
     #
-    if len(pickTime_UTC.keys()) != 3:
+    if len(pickTime_UTC.keys()) != 6:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -291,14 +339,13 @@ def test_work_multiwin_skew_diff():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   [0.1, 0.15, 0.2, 0.25, 0.3],
-                  channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -314,14 +361,24 @@ def test_work_multiwin_skew_diff():
                      '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
+                     'outlier_obs': {},
+                     'pick_error': 0.57,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
+                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
+                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000)}}
     #
-    if len(pickTime_UTC.keys()) != 7:
+    if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -329,18 +386,16 @@ def test_work_multiwin_skew_diff():
 def test_transform_cf():
     """Testing the new functionality of HOST picker.
        Select the transformation methods from list
-
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   [0.1, 0.15, 0.2, 0.25, 0.3],
-                  channel="*Z",
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
                                 'transform_smooth': {'window_type': 'hanning'}},
@@ -356,14 +411,24 @@ def test_transform_cf():
                      '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
+                     'outlier_obs': {},
+                     'pick_error': 0.57,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
+                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
+                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000)}}
     #
-    if len(pickTime_UTC.keys()) != 7:
+    if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
 
@@ -376,14 +441,13 @@ def test_work_singlewin_kurt_min():
     """
     errors = []
     #
-    st = stproc.copy()
-    st.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
             UTCDateTime("2009-08-24T00:20:08.500000"))
     #
     try:
-        HP = Host(st,
+        HP = Host(tr,
                   0.7,
-                  channel="*Z",
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {}, 'transform_f3': {}, 'transform_f4': {}},
                   detection_method="min")
@@ -394,13 +458,84 @@ def test_work_singlewin_kurt_min():
     pickTime_UTC = HP.get_picks_UTC()
     ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000)}
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     'outlier_obs': {},
+                     'pick_error': 39.89,
+                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000)}}
     #
-    if len(pickTime_UTC.keys()) != 3:
+    if len(pickTime_UTC.keys()) != 6:
         errors.append("KEY numbers doesn't correspond, missins some")
     #
     for _kk, _pp in pickTime_UTC.items():
-        if pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
             errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_work_singlewin_skew_s2nratio():
+    """ Test the HOST picking algorithm for:
+       - SKEWNESS
+       - SINGLEWIN
+       - AIC
+    """
+    errors = []
+    #
+    tr = trproc.copy()
+    tr.trim(UTCDateTime("2009-08-24T00:20:06.500000"),
+            UTCDateTime("2009-08-24T00:20:08.250000"))
+    #
+    try:
+        HP = Host(tr,
+                  0.7,
+                  hos_method="skewness",
+                  detection_method='aic')
+    except TypeError:
+        errors.append("HOST class uncorrectly initialized")
+    #
+    HP.work(debug_plot=False)
+    pickTime_UTC = HP.get_picks_UTC()
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                     'outlier_obs': {},
+                     'pick_error': 39.89,
+                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000)}}
+    #
+    if len(pickTime_UTC.keys()) != 6:
+        errors.append("KEY numbers doesn't correspond, missins some")
+    #
+    for _kk, _pp in pickTime_UTC.items():
+        if _kk != "pick_error" and pickTime_UTC[_kk] != ref_pick_dict[_kk]:
+            errors.append("wrong KEY for pick %s" % _kk)
+        elif _kk == "pick_error" and not isclose(pickTime_UTC[_kk], ref_pick_dict[_kk]):
+            errors.append("wrong PICK-ERROR assessment of %5.3f" %
+                          (pickTime_UTC[_kk] - ref_pick_dict[_kk]))
+    #
+    assert not errors, "Errors occured:\n{}".format("\n".join(errors))
+
+
+def test_only_s2nratio():
+    """ Testing only the signal-to-noise ratio method """
+    errors = []
+    fake_data = array(
+        [0.1, 0.2, 0.3, 0.2, 0.1, 0.0, -0.1, -0.2, -0.3, -0.2, -0.1, 0.0,
+         0.2, 0.5, 1, 2, 4, 6, 5, 4.5, 1.5])
+    fake_stats = {'starttime': UTCDateTime("2009-08-24T00:20:00"),
+                  'delta': 0.5}
+    #
+    tr = create_obspy_trace(fake_data, fake_stats)
+    HP = Host(tr,
+              0.7,
+              hos_method="skewness",
+              detection_method='aic')
+    # 4 sample in noise, 4 sample in signal
+    s2nr = HP._snratio(UTCDateTime("2009-08-24T00:20:06"), 2.0, 2.0)
+    #
+    if not isclose(s2nr, 6.10):
+        errors.append("S2N errors doesn't correspond!")
     #
     assert not errors, "Errors occured:\n{}".format("\n".join(errors))
