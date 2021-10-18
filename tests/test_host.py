@@ -49,7 +49,6 @@ def test_init():
                   0.6,
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_f4': {'windowtype': 'hanning'},
                                 'transform_f5': {'power': 2}},
                   detection_method="aic")
     except TypeError:
@@ -114,7 +113,7 @@ def test_work_multiwin_kurt_aic():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -166,7 +165,7 @@ def test_work_singlewin_kurt_aic():
                   0.7,
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -207,7 +206,7 @@ def test_work_multiwin_skew_aic():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -260,7 +259,7 @@ def test_work_singlewin_skew_aic():
                   0.7,
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -304,7 +303,7 @@ def test_work_singlewin_skew_diff():
                   0.7,
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -348,7 +347,7 @@ def test_work_multiwin_skew_diff():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -398,7 +397,7 @@ def test_transform_cf():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth': {'window_type': 'hanning'}},
+                                'transform_smooth_full': {'window_type': 'hanning'}},
                   detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")

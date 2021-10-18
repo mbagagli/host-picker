@@ -68,33 +68,21 @@ def _smooth(x, window_len=11, window='hanning'):
     parts are minimized in the begining and end part of the output
     signal.
 
-    input:
+    Args:
         x: the input signal
         window_len: the dimension of the smoothing window; should be an
-                    odd integer
+                    odd integer (samples)
         window: the type of window from 'flat', 'hanning', 'hamming',
                 'bartlett', 'blackman'
             flat window will produce a moving average smoothing.
 
-    output:
+    Returns:
         the smoothed signal
 
-    example:
+    Note:
+        length(output) != length(input), to correct this:
+        return y[(window_len/2-1):-(window_len/2)] instead of just y.
 
-    t=linspace(-2,2,0.1)
-    x=sin(t)+randn(len(t))*0.1
-    y=smooth(x)
-
-    see also:
-
-    numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman,
-    numpy.convolve scipy.signal.lfilter
-
-    TODO: the window parameter could be the window itself if an array
-          instead of a string.
-
-    NOTE: length(output) != length(input), to correct this:
-          return y[(window_len/2-1):-(window_len/2)] instead of just y.
     """
 
     if x.ndim != 1:
@@ -127,7 +115,7 @@ def _smooth(x, window_len=11, window='hanning'):
 # ====================================  TRANSFORM CF
 
 def transform_f2(inarr):
-    """ Stainr-like energy transformation
+    """ Stair-like energy transformation
 
     Similar to transformation num 2 from Baillard et al. 2014
 
@@ -222,15 +210,27 @@ def transform_f5(inarr, power=2.0):
 
 
 def transform_smooth(inarr, smooth_win, window_type='hanning'):
-    """Simple smoothing of the CF to better extract  the main transient.
+    """ Simple smoothing of the CF to better extract the main pick.
 
-    smooth_win is in SAMPLE!
-    If smooth_win is even a +1 is given to make it odd
+    This function will smooth of a window equal to the one specified
+    in sample
+
+    Args:
+        inarr (numpy.ndarray): 1D array with CFs
+        smooth_win (int): sample size of smoothing window
+        window_type (str): is the window used for the smoothing
+            convolution. Possible choices: 'flat', 'hanning', 'hamming',
+            'bartlett', 'blackman' [default 'hanning']
+
+    Note:
+        smooth_win must be an ODD integer (after conversion). In case is
+        EVEN, a +1 is given to transform it
+
     """
     if not isinstance(inarr, np.ndarray):
         logger.error("The input vector should be a numpy array type")
         raise HE.BadInstance()
-    #
+
     if smooth_win % 2 == 0:
         smooth_win += 1
     return _smooth(inarr, window_len=smooth_win, window=window_type)

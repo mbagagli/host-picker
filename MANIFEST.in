@@ -1,3 +1,4 @@
-include *.txt
+include README.md
+include LICENSE.txt
+include requirements.txt
 recursive-include host/src *.c
-LICENSE.md

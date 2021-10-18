@@ -248,12 +248,36 @@ class Host(object):
             if self.tr_cf and isinstance(self.tr_cf, dict):
                 outarr = inarr
                 for _kk, _vv in self.tr_cf.items():
+
                     logger.debug("Transform HOST CF: %s" % _kk)
-                    call_funct = getattr(HS, _kk.lower())
-                    if _kk.lower() == 'transform_smooth':
+
+                    if _kk.lower() == 'transform_smooth_full':
+
+                        call_funct = getattr(HS, 'transform_smooth')
                         outarr = call_funct(outarr, num_sample, **_vv)
+
+                    elif _kk.lower() == 'transform_smooth_custom':
+
+                        # Check if win-size is higher than CF length
+                        win_sample = np.int(
+                            _vv['smooth_win'] / self.tr.stats.delta)
+
+                        if win_sample >= num_sample:
+                            logger.warning(("The %d (samples) window " +
+                                            "specified is longer than CF: " +
+                                            "%d (samples) !!! " +
+                                            "SKIPPING !!!") % (
+                                              win_sample, num_sample))
+                        else:
+                            del _vv['smooth_win']  # no need anymore
+                            call_funct = getattr(HS, 'transform_smooth')
+                            outarr = call_funct(outarr, win_sample, **_vv)
+
                     else:
+                        # Standard call
+                        call_funct = getattr(HS, _kk.lower())
                         outarr = call_funct(outarr, **_vv)
+
             else:
                 logger.error("The transform_cf parameter must be a dict!")
                 raise HE.BadInstance()
@@ -429,7 +453,8 @@ class Host(object):
 
         # ======================== Transform CF
         if self.tr_cf:
-            hos_arr = self._transform_cf(hos_arr, N)
+            hos_arr = self._transform_cf(hos_arr, N)  # orig
+            # hos_arr = self._transform_cf(hos_arr)
 
         # ======================== Extract Pick (AIC/GAUSS)
         hos_idx, eval_fun = self._detect_pick(hos_arr)
@@ -566,6 +591,22 @@ class Host(object):
             self.detection = "min"
         else:
             logger.error("DETECTION method Not valid ['aic'; 'diff'/'gauss']")
+            raise HE.BadParameterValue()
+
+    def set_transform_cf(self, transform_dict):
+        """ Modify or set the CF-transformation dict
+
+        Args:
+            transform_dict (dict): key/value dictionary containing as
+                key the name of one function transformation contained
+                in scaffold module, as value another dictionary for
+                the functions parameters
+
+        """
+        if isinstance(transform_dict, dict):
+            self.tr_cf = transform_dict
+        else:
+            logger.error("transform_dict must a a dictionary!")
             raise HE.BadParameterValue()
 
     def set_diffgauss_threshold(self, threshold):

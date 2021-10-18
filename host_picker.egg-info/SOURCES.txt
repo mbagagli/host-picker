@@ -1,0 +1,15 @@
+MANIFEST.in
+README.md
+requirements.txt
+setup.py
+host/__init__.py
+host/errors.py
+host/picker.py
+host/plotting.py
+host/scaffold.py
+host/src/host_clib.c
+host_picker.egg-info/PKG-INFO
+host_picker.egg-info/SOURCES.txt
+host_picker.egg-info/dependency_links.txt
+host_picker.egg-info/requires.txt
+host_picker.egg-info/top_level.txt

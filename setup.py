@@ -11,14 +11,14 @@ cmodule = Extension('host/src/host_clib',
                     extra_compile_args=["-O3"])
 
 setup(
-    name="host",
-    version="2.2.1",
+    name="host-picker",
+    version="2.3.1",
     author="Matteo Bagagli",
     author_email="matteo.bagagli@erdw.ethz.com",
-    description="a High Order STatisics picker algorithms",
+    description="High Order STatisics picking algorithms",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires='>=3.6',
+    python_requires='>=3.5',
     install_requires=required_list,
     packages=find_packages(),
     package_data={"host": ['src/*.c']},

@@ -14,6 +14,7 @@ int skewcf(float* arr, int szarr, int szwin, /*@out@*/ float* scf);
 int skewcf_mean(float* arr, int szarr, int szwin, /*@out@*/ float* scf);
 
 int aicp(float* arr, int sz, /*@out@*/ float* aic, int* minidx);
+// int aicp(float* arr, int sz, /*@out@*/ float* aic, int* pminidx);
 
 /* ------------  MyHELP
 int A[5]
@@ -26,8 +27,6 @@ printf("&q = %p\n", (void*)&q);
 
 https://www.youtube.com/watch?v=CpjVucvAc3g
 -------------- */
-
-
 
 
 /* ---------------------------------------------
@@ -99,7 +98,6 @@ int kurtcf_mean(float* arr, int szarr, int szwin, /*@out@*/ float* kcf)
     //
     return 0;
 }
-
 
 
 
@@ -185,11 +183,11 @@ int aicp(float* arr, int sz, /*@out@*/ float* aic, int* pminidx) {
     int ii;  // MAIN loop
     int minidx = 0;
     float minval = INFINITY;
-    float var1, var2, val1, val2;
-    memset(aic, 0, (sz-1)*sizeof(float));  // or sz-1 ???
+    //float var1, var2, val1, val2;
+    memset(aic, 0, (sz-1)*sizeof(float));
 
     // Declare VARIANCE
-    float sd;
+    //float sd;
     int _x, _xx, _y, _yy; // AUX loop
     float sumOne, meanOne;
     float sumTwo, meanTwo;
@@ -250,7 +248,7 @@ int aicp(float* arr, int sz, /*@out@*/ float* aic, int* pminidx) {
         }
 
 
-        // Not minor equal, but just equal
+        // Not minor equal, but just minor
         if (aic[ii-1] < minval) {
             minval = aic[ii-1];
             minidx = ii-1;
