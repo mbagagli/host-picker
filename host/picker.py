@@ -388,43 +388,56 @@ class Host(object):
         """
         valid_obs = []    # will be transformed in dict for output
         outliers = []     # will be transformed in dict for output
-        replicates = {}
-        #
-        orig_mean = np.mean(tuple(indict.values()))
-        # kk is the LEFT OUT obs
-        for kk, vv in indict.items():
-            ta = [indict[i] for i in indict.keys() if i != kk]
-            replicates[kk] = {'mean': np.mean(ta),
-                              'bias': np.mean(ta) - orig_mean
-                              }
 
-        # Standard deviation of residuals (BIAS)
-        jkn_bias_std = np.std([vv['bias'] for kk, vv in replicates.items()])
+        if len(indict) >= 3:
+            replicates = {}
+            orig_mean = np.mean(tuple(indict.values()))
 
-        for kk, vv in replicates.items():
-            if not np.abs(vv['bias']) >= 2*jkn_bias_std:
-                # It's a valid observation
-                valid_obs.append((kk, indict[kk]))
-            else:
-                # It's a complete outlier
-                outliers.append((kk, indict[kk]))
+            # kk is the LEFT OUT obs
+            for kk, vv in indict.items():
+                ta = [indict[i] for i in indict.keys() if i != kk]
+                replicates[kk] = {'mean': np.mean(ta),
+                                  'bias': np.mean(ta) - orig_mean
+                                  }
 
-        # -- Calc Error
-        _only_valid = [_t[1] for _t in valid_obs]
-        pick_error = np.max(_only_valid) - np.min(_only_valid)
+            # Standard deviation of residuals (BIAS)
+            jkn_bias_std = np.std([vv['bias'] for kk, vv in
+                                   replicates.items()])
 
-        # -- Round Error
-        # trick/workaround to properly round  XXX.5 to XXX+1.0  (MB)
-        # numpy e python round to the NEAREST EVEN number (i.e. 2.5 --> 2)
-        pick_error += 0.00111
-        pick_error = np.round(pick_error, 2)
+            for kk, vv in replicates.items():
+                if not np.abs(vv['bias']) >= 2*jkn_bias_std:
+                    # It's a valid observation
+                    valid_obs.append((kk, indict[kk]))
+                else:
+                    # It's a complete outlier
+                    outliers.append((kk, indict[kk]))
 
-        # Now valid Obs and Outlier could be DICT
-        valid_obs_dict = dict(sorted(valid_obs, key=lambda x: x[1]))
-        valid_obs_dict = {k: UTCDateTime(v) for k, v in valid_obs_dict.items()}
+            # -- Calc Error
+            _only_valid = [_t[1] for _t in valid_obs]
+            pick_error = np.max(_only_valid) - np.min(_only_valid)
 
-        outliers_dict = dict(sorted(outliers, key=lambda x: x[1]))
-        outliers_dict = {k: UTCDateTime(v) for k, v in outliers_dict.items()}
+            # -- Round Error
+            # trick/workaround to properly round  XXX.5 to XXX+1.0  (MB)
+            # numpy e python round to the NEAREST EVEN number (i.e. 2.5 --> 2)
+            pick_error += 0.00111
+            pick_error = np.round(pick_error, 2)
+
+            # Now valid Obs and Outlier could be DICT
+            valid_obs_dict = dict(sorted(valid_obs, key=lambda x: x[1]))
+            valid_obs_dict = {k: UTCDateTime(v) for k, v in
+                              valid_obs_dict.items()}
+
+            outliers_dict = dict(sorted(outliers, key=lambda x: x[1]))
+            outliers_dict = {k: UTCDateTime(v) for k, v in
+                             outliers_dict.items()}
+        else:
+            _lv = tuple(indict.values())
+            pick_error = np.max(_lv) - np.min(_lv)
+            pick_error += 0.00111
+            pick_error = np.round(pick_error, 2)
+            #
+            valid_obs_dict = {k: UTCDateTime(v) for k, v in indict.items()}
+            outliers_dict = {}
 
         return pick_error, valid_obs_dict, outliers_dict
 
@@ -453,8 +466,7 @@ class Host(object):
 
         # ======================== Transform CF
         if self.tr_cf:
-            hos_arr = self._transform_cf(hos_arr, N)  # orig
-            # hos_arr = self._transform_cf(hos_arr)
+            hos_arr = self._transform_cf(hos_arr, N)
 
         # ======================== Extract Pick (AIC/GAUSS)
         hos_idx, eval_fun = self._detect_pick(hos_arr)
