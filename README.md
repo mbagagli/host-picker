@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org/badge/latestdoi/418490530)
 [![Build Status](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main)](https://app.travis-ci.com/mbagagli/host-picker)
 
 # HOST
@@ -9,8 +10,8 @@
 ## What is it?
 The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.
 This algorithm took inspiration from the one described in [_Baillard et al. 2014_](10.1785/0120120347).
-The idea behing this package is to provide user-friendly classes for seismic phase picking with
-_skewness_ and _kurtosis_ carachteristic-functions.
+The idea behind this package is to provide user-friendly classes for seismic phase picking with
+_skewness_ and _kurtosis_ characteristic-functions.
 Originally applied to seismograms by [_Saragiotis et al._](10.1109/TGRS.2002.800438),
 the HOS-CF are able to detect energic transient when the statistical properties of a seismogram
 (or time series) change abruptly. These CF are calculated on moving window with fixed window.
@@ -54,6 +55,13 @@ to check everything is fine
 
 The package comes with jupyter-notebooks (under `books` subdir) where you
 can test and understand this picking-algorithm.
+
+## Cite me ...
+
+If you use this code for your science, please consider citing it in your final results or manuscripts.
+```
+M. Bagagli (2021). mbagagli/host-picker: host-picker (v2.3.2). Zenodo. https://doi.org/10.5281/zenodo.5575913
+```
 
 ## Reference
 - Baillard, C., Crawford, W.C., Ballu, V., Hibert, C. and Mangeney, A., 2014. An automatic kurtosis‐based P‐and S‐phase picker designed for local seismic networks. Bulletin of the Seismological Society of America, 104(1), pp.394-409.
