@@ -1,16 +1,18 @@
 Metadata-Version: 2.1
 Name: host-picker
-Version: 2.3.1
-Summary: a High Order STatisics picker algorithms
+Version: 2.3.2
+Summary: High Order STatisics picking algorithms
 Home-page: UNKNOWN
 Author: Matteo Bagagli
 Author-email: matteo.bagagli@erdw.ethz.com
 License: UNKNOWN
-Description: # HOST
+Description: [![Build Status](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main)](https://app.travis-ci.com/mbagagli/host-picker)
+        
+        # HOST
         
         **Author:** _Matteo Bagagli_
         **Date:** _10/2021_
-        **Version:** _2.3.1_
+        **Version:** _2.3.2_
         
         ## What is it?
         The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.
@@ -34,7 +36,7 @@ Description: # HOST
         Since version `v2.3.1` the picker can be found in PyPI repository. Therefore to install the latest
         stable version you may simply type:
         ```bash
-        $ pip install host
+        $ pip install host-picker
         ```
         and be ready to go.
         
@@ -51,7 +53,7 @@ Description: # HOST
         ... et voila'!
         
         ## Additional infos
-        Although the package testing is in [Travis-CI](), you could still install `pytest` and
+        Although the package testing is in [Travis-CI](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main), you could still install `pytest` and
         inside the cloned folder type:
         ```bash
         $ pytest

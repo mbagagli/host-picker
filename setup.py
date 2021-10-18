@@ -12,7 +12,7 @@ cmodule = Extension('host/src/host_clib',
 
 setup(
     name="host-picker",
-    version="2.3.1",
+    version="2.3.2",
     author="Matteo Bagagli",
     author_email="matteo.bagagli@erdw.ethz.com",
     description="High Order STatisics picking algorithms",

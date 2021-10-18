@@ -2,3 +2,4 @@ include README.md
 include LICENSE.txt
 include requirements.txt
 recursive-include host/src *.c
+recursive-include books

@@ -1,8 +1,10 @@
+[![Build Status](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main)](https://app.travis-ci.com/mbagagli/host-picker)
+
 # HOST
 
 **Author:** _Matteo Bagagli_
 **Date:** _10/2021_
-**Version:** _2.3.1_
+**Version:** _2.3.2_
 
 ## What is it?
 The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.
@@ -43,7 +45,7 @@ $ pip install .
 ... et voila'!
 
 ## Additional infos
-Although the package testing is in [Travis-CI](), you could still install `pytest` and
+Although the package testing is in [Travis-CI](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main), you could still install `pytest` and
 inside the cloned folder type:
 ```bash
 $ pytest
