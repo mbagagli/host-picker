@@ -1,5 +1,6 @@
 include *.in
 include *.md
+include requirements.txt
 recursive-include books *.ipynb
 recursive-include tests *.py
 recursive-include tests_data *.mseed

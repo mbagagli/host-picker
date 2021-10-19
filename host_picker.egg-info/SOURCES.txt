@@ -2,6 +2,7 @@ CODE_OF_CONDUCT.md
 LICENSE.md
 MANIFEST.in
 README.md
+requirements.txt
 setup.py
 books/0.HOST_quickstart.ipynb
 books/1.HOST_detection.ipynb

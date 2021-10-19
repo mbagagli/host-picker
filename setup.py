@@ -12,7 +12,7 @@ cmodule = Extension('host/src/host_clib',
 
 setup(
     name="host-picker",
-    version="2.4.2",
+    version="2.4.3",
     author="Matteo Bagagli",
     author_email="matteo.bagagli@erdw.ethz.com",
     url="https://github.com/mbagagli/host-picker",
