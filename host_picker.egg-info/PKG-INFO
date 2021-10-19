@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: host-picker
-Version: 2.4.1
+Version: 2.4.2
 Summary: High Order STatisics picking algorithms
 Home-page: https://github.com/mbagagli/host-picker
 Author: Matteo Bagagli
@@ -13,7 +13,7 @@ Description: [![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org
         
         **Author:** _Matteo Bagagli_
         **Date:** _10/2021_
-        **Version:** _2.4.1_
+        **Version:** _2.4.2_
         
         ## What is it?
         The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.
@@ -68,7 +68,7 @@ Description: [![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org
         
         If you use this code for your science, please consider citing it in your final results or manuscripts.
         ```
-        M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5575913
+        M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5579271
         ```
         
         ## Reference
