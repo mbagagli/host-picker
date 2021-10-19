@@ -60,7 +60,7 @@ can test and understand this picking-algorithm.
 
 If you use this code for your science, please consider citing it in your final results or manuscripts.
 ```
-M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5575913
+M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5579271
 ```
 
 ## Reference
