@@ -1,5 +1,6 @@
-include README.md
-include LICENSE.txt
-include requirements.txt
-recursive-include host/src *.c
-recursive-include books
+include *.in
+include *.md
+recursive-include books *.ipynb
+recursive-include tests *.py
+recursive-include tests_data *.mseed
+recursive-include tests_data *.SAC

@@ -5,7 +5,7 @@
 
 **Author:** _Matteo Bagagli_
 **Date:** _10/2021_
-**Version:** _2.3.2_
+**Version:** _2.4.1_
 
 ## What is it?
 The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.
@@ -26,7 +26,7 @@ making this package fast and suitable also for realtime picking porpouses.
 ## Standard installation
 In general, the usage of virtual env is a good habit for python users.
 Although this package's dependencies is not For separated **conda** environment is recommended.
-Since version `v2.3.1` the picker can be found in PyPI repository. Therefore to install the latest
+Since version `v2.4.1` the picker can be found in PyPI repository. Therefore to install the latest
 stable version you may simply type:
 ```bash
 $ pip install host-picker
@@ -56,11 +56,11 @@ to check everything is fine
 The package comes with jupyter-notebooks (under `books` subdir) where you
 can test and understand this picking-algorithm.
 
-## Cite me ...
+## Citing
 
 If you use this code for your science, please consider citing it in your final results or manuscripts.
 ```
-M. Bagagli (2021). mbagagli/host-picker: host-picker (v2.3.2). Zenodo. https://doi.org/10.5281/zenodo.5575913
+M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5575913
 ```
 
 ## Reference

@@ -239,8 +239,9 @@ def transform_smooth(inarr, smooth_win, window_type='hanning'):
 def gauss_dev(inarr, thr):
     """ Gaussian detector
 
-    Assuming it's half gaussian we calculate the mean and std.
-    We multiply the std with a std deviation with a threshold
+    Assuming it's a gaussian process we calculate first-derivative of
+    the input array. We declare the arrival at the first sample where
+    its value exceed the input threshold (inarr[x] >= std*thr)
 
     Args:
         inarr (numpy.ndarray): input values 1D vector
@@ -258,14 +259,15 @@ def gauss_dev(inarr, thr):
     """
     hos_arr_diff = np.abs(np.diff(inarr))
     m = np.mean(hos_arr_diff)
-    s = np.std(hos_arr_diff)
+    hos_arr_diff_zeromean = hos_arr_diff - m
+    s = np.std(hos_arr_diff_zeromean)
     #
-    all_idx = np.where(hos_arr_diff >= thr*s)[0]
-    all_idx[0]
+    all_idx = np.where(hos_arr_diff_zeromean >= thr*s)[0]
     try:
         return all_idx[0] - 1, m, s, all_idx, hos_arr_diff
     except IndexError:
-        raise HE.PickNotFound()
+        raise HE.PickNotFound("DIFF/GAUSS method failed to detect pick! " +
+                              "Hint: try to lower the threshold")
 
 
 def detect_minima(inarr):

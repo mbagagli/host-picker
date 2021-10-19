@@ -2,6 +2,8 @@ from numpy import isclose, array, ndarray
 from host.picker import Host
 from obspy import read, UTCDateTime
 from obspy.core.trace import Trace
+#
+from pprint import pprint
 
 
 # ================================================   Preparing ...
@@ -113,7 +115,7 @@ def test_work_multiwin_kurt_aic():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -125,15 +127,14 @@ def test_work_multiwin_kurt_aic():
                      '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
                      '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 672000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 676667),
                      'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
-                     'outlier_obs': {},
-                     'pick_error': 0.07,
-                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
-                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
+                     'outlier_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000)},
+                     'pick_error': 0.029999999999999999,
+                     'valid_obs': {'0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
                                    '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
-                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
-                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000)}}
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000)}}
     #
     if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missing some")
@@ -165,7 +166,7 @@ def test_work_singlewin_kurt_aic():
                   0.7,
                   hos_method="kurtosis",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -206,7 +207,7 @@ def test_work_multiwin_skew_aic():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -220,14 +221,12 @@ def test_work_multiwin_skew_aic():
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
                      'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                     'outlier_obs': {},
-                     'pick_error': 0.02,
+                     'outlier_obs': {'0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
+                                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000)},
+                     'pick_error': 0.0,
                      'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
                                    '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000)}}
-
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000)}}
     #
     if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -259,7 +258,7 @@ def test_work_singlewin_skew_aic():
                   0.7,
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method="aic")
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
@@ -303,19 +302,19 @@ def test_work_singlewin_skew_diff():
                   0.7,
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000),
+    ref_pick_dict = {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 570000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 570000),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 570000),
                      'outlier_obs': {},
-                     'pick_error': 39.06,
-                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 480000)}}
+                     'pick_error': 39.960000000000001,
+                     'valid_obs': {'0.7': UTCDateTime(2009, 8, 24, 0, 20, 7, 570000)}}
     #
     if len(pickTime_UTC.keys()) != 6:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -347,27 +346,26 @@ def test_work_multiwin_skew_diff():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
-                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
-                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
-                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
-                     'outlier_obs': {},
-                     'pick_error': 0.57,
-                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
-                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
-                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
-                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000)}}
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 630000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 680000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 740000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 610000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 620000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 683333),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 680000),
+                     'outlier_obs': {'0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 610000),
+                                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 620000)},
+                     'pick_error': 0.11,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 630000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 680000),
+                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 740000)}}
     #
     if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")
@@ -397,27 +395,26 @@ def test_transform_cf():
                   [0.1, 0.15, 0.2, 0.25, 0.3],
                   hos_method="skewness",
                   transform_cf={'transform_f2': {},
-                                'transform_smooth_full': {'window_type': 'hanning'}},
+                                'transform_smooth': {'window_type': 'hanning'}},
                   detection_method=("diff", 0.5))
     except TypeError:
         errors.append("HOST class uncorrectly initialized")
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
-    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
-                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
-                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
-                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
-                     'outlier_obs': {},
-                     'pick_error': 0.57,
-                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 610000),
-                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 660000),
-                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 710000),
-                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 6, 790000),
-                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 180000)}}
+    ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 630000),
+                     '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 680000),
+                     '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 740000),
+                     '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 610000),
+                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 620000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 6, 683333),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 6, 680000),
+                     'outlier_obs': {'0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 610000),
+                                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 620000)},
+                     'pick_error': 0.11,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 6, 630000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 6, 680000),
+                                   '0.2': UTCDateTime(2009, 8, 24, 0, 20, 6, 740000)}}
     #
     if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")

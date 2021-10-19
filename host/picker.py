@@ -68,7 +68,8 @@ myclib.skewcf_mean.argtypes = [np.ctypeslib.ndpointer(
                                         dtype=np.float32, ndim=1,
                                         flags='C_CONTIGUOUS')]
 
-# =====================================================================
+# ===================================================== Additional ...
+DEFAULTPICKERROR = -9999.99
 
 
 class Host(object):
@@ -196,7 +197,7 @@ class Host(object):
 
         Returns:
             hos_arr (numpy.ndarray): trace HOS-CF
-            N (int): length of the CF
+            N (int): length in samples of the time-window of analysis
 
         """
         if self.ts.size == 0:
@@ -251,27 +252,27 @@ class Host(object):
 
                     logger.debug("Transform HOST CF: %s" % _kk)
 
-                    if _kk.lower() == 'transform_smooth_full':
+                    if _kk.lower() == 'transform_smooth':
 
                         call_funct = getattr(HS, 'transform_smooth')
                         outarr = call_funct(outarr, num_sample, **_vv)
 
                     elif _kk.lower() == 'transform_smooth_custom':
-
                         # Check if win-size is higher than CF length
                         win_sample = np.int(
                             _vv['smooth_win'] / self.tr.stats.delta)
 
-                        if win_sample >= num_sample:
+                        if win_sample >= outarr.size:
                             logger.warning(("The %d (samples) window " +
                                             "specified is longer than CF: " +
                                             "%d (samples) !!! " +
                                             "SKIPPING !!!") % (
-                                              win_sample, num_sample))
+                                              win_sample, outarr.size))
                         else:
-                            del _vv['smooth_win']  # no need anymore
                             call_funct = getattr(HS, 'transform_smooth')
-                            outarr = call_funct(outarr, win_sample, **_vv)
+                            outarr = call_funct(outarr, win_sample,
+                                                **{x: y for x, y in _vv.items()
+                                                   if x != 'smooth_win'})
 
                     else:
                         # Standard call
@@ -303,14 +304,8 @@ class Host(object):
             if not self.thresh:
                 logger.error("Missing threshold for 'diff' DETECTION method")
                 raise HE.MissingAttribute()
-            try:
-                hos_idx, m, s, all_idx, eval_fun = HS.gauss_dev(hos_arr,
-                                                                self.thresh)
-            except HE.PickNotFound:
-                logger.error("Critical error! We should not be here! " +
-                             " The hos_arr should be always positive, " +
-                             "and therefore also the threshold level")
-                HS._abort()
+            hos_idx, m, s, all_idx, eval_fun = HS.gauss_dev(hos_arr,
+                                                            self.thresh)
 
         elif self.detection.lower() in ('aic', 'akaike'):
             hos_idx, eval_fun = HS.AICcf(hos_arr)
@@ -403,33 +398,67 @@ class Host(object):
             # Standard deviation of residuals (BIAS)
             jkn_bias_std = np.std([vv['bias'] for kk, vv in
                                    replicates.items()])
+            only_zero = np.all((jkn_bias_std == 0.0))
 
-            for kk, vv in replicates.items():
-                if not np.abs(vv['bias']) >= 2*jkn_bias_std:
-                    # It's a valid observation
-                    valid_obs.append((kk, indict[kk]))
+            if only_zero:
+                # No bias, everybody on the same pick
+                logger.debug("All picks agree ...")
+                _lv = tuple(indict.values())
+                pick_error = np.max(_lv) - np.min(_lv)
+                pick_error += 0.00111
+                pick_error = np.round(pick_error, 2)
+                #
+                valid_obs_dict = {k: UTCDateTime(v) for k, v in indict.items()}
+                outliers_dict = {}
+
+            else:
+                # There's changes, check outliers / valid
+                logger.debug("There's pick variation -> checking for outlier")
+
+                # Evaluating the 2*std threshold
+                for kk, vv in replicates.items():
+                    if not np.abs(vv['bias']) >= jkn_bias_std:
+                        # It's a valid observation
+                        valid_obs.append((kk, indict[kk]))
+                    else:
+                        # It's a complete outlier
+                        outliers.append((kk, indict[kk]))
+
+                if not valid_obs:
+                    """  No valid obs, because extreme change in BIAS.
+                    e.g. Bulk obs balanced at the edges.
+                         Although should never enter here, because even
+                         if 2 obs and 2 obs at the edge, create a wide
+                         gaussian distribution that.will invude them
+                         anyway inside the 2*std threshold
+                    This switch is just here for stability reason ...
+                    """
+                    logger.warning("No valid-obs found! Picks unstable! " +
+                                   "Setting PICK-ERROR to DEFAULT [%.2f]" %
+                                   DEFAULTPICKERROR)
+                    pick_error = DEFAULTPICKERROR
+                    valid_obs_dict = {}
+                    outliers_dict = {
+                        k: UTCDateTime(v) for k, v in indict.items()}
+
                 else:
-                    # It's a complete outlier
-                    outliers.append((kk, indict[kk]))
+                    # -- Calc Error
+                    _only_valid = [_t[1] for _t in valid_obs]
+                    pick_error = np.max(_only_valid) - np.min(_only_valid)
 
-            # -- Calc Error
-            _only_valid = [_t[1] for _t in valid_obs]
-            pick_error = np.max(_only_valid) - np.min(_only_valid)
+                    # -- Round Error
+                    pick_error += 0.00111
+                    pick_error = np.round(pick_error, 2)
 
-            # -- Round Error
-            # trick/workaround to properly round  XXX.5 to XXX+1.0  (MB)
-            # numpy e python round to the NEAREST EVEN number (i.e. 2.5 --> 2)
-            pick_error += 0.00111
-            pick_error = np.round(pick_error, 2)
+                    # Now valid Obs and Outlier could be DICT
+                    valid_obs_dict = dict(
+                        sorted(valid_obs, key=lambda x: x[1]))
+                    valid_obs_dict = {k: UTCDateTime(v) for k, v in
+                                      valid_obs_dict.items()}
 
-            # Now valid Obs and Outlier could be DICT
-            valid_obs_dict = dict(sorted(valid_obs, key=lambda x: x[1]))
-            valid_obs_dict = {k: UTCDateTime(v) for k, v in
-                              valid_obs_dict.items()}
-
-            outliers_dict = dict(sorted(outliers, key=lambda x: x[1]))
-            outliers_dict = {k: UTCDateTime(v) for k, v in
-                             outliers_dict.items()}
+                    outliers_dict = dict(sorted(outliers, key=lambda x: x[1]))
+                    outliers_dict = {k: UTCDateTime(v) for k, v in
+                                     outliers_dict.items()}
         else:
             _lv = tuple(indict.values())
             pick_error = np.max(_lv) - np.min(_lv)
@@ -440,6 +469,15 @@ class Host(object):
             outliers_dict = {}
 
         return pick_error, valid_obs_dict, outliers_dict
+
+    def _define_final_pick(self, indict):
+        """ Simply return mean and median UTCDateTime of indict
+            UTCDateTime obkject. It ignores any keys
+        """
+        datearr = [float(_v) for _k, _v in indict.items()]
+        meanUTC = UTCDateTime(np.array(datearr).mean())
+        medianUTC = UTCDateTime(np.median(np.array(datearr)))
+        return meanUTC, medianUTC
 
     def _pick(self, tw):
         """ Private method extracting picks
@@ -507,25 +545,18 @@ class Host(object):
             _hos = {}
             _eval = {}
             _hos_idx = {}
-            #
+            # === 1. Pick
             for tw in self.time_win:
                 (_pt_float[str(tw)],
                  _hos[str(tw)],
                  _eval[str(tw)],
                  _hos_idx[str(tw)]) = self._pick(tw)
-            #
-            meanUTC = UTCDateTime(np.array(list(_pt_float.values())).mean())
-            medianUTC = UTCDateTime(np.median(
-                            np.array(list(_pt_float.values()))))
-            _pt_UTC['mean'] = meanUTC
-            _pt_UTC['median'] = medianUTC
 
-            # Convert floats into UTCDateTime
-            for _kf, _vf in _pt_float.items():
-                if _kf not in ('mean', 'median'):
-                    _pt_UTC[_kf] = UTCDateTime(_vf)
+            # === 2. Convert results-floats into UTCDateTime
+            _pt_UTC = {_kf: UTCDateTime(_vf)
+                       for (_kf, _vf) in _pt_float.items()}
 
-            # === Declare the error
+            # === 3. Declare the error
             if len(self.time_win) >= 2:
                 (_pt_UTC['pick_error'],
                  _pt_UTC['valid_obs'],
@@ -536,6 +567,10 @@ class Host(object):
                 _pt_UTC['valid_obs'] = {
                     str(self.time_win[0]): _pt_UTC[str(self.time_win[0])]}
                 _pt_UTC['outlier_obs'] = {}
+
+            # === 4. Declare pick
+            _pt_UTC['mean'], _pt_UTC['median'] = self._define_final_pick(
+                    _pt_UTC['valid_obs'])
 
         else:
             logger.error("Parameter time_windows should be either " +
