@@ -53,13 +53,13 @@ $ pytest
 to check everything is fine.
 
 The package comes with some jupyter-notebooks (under `books` subdir) where you
-can test and understand this picking-algorithm.
+can test, understand and customize this picking-algorithm.
 
 ## Citing
 
 If you use this code for your science, please consider citing it in your final results or manuscripts.
 ```
-M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5579442
+M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5575912.
 ```
 
 ## Reference
