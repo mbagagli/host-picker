@@ -38,7 +38,7 @@ If you want to be updated with the latest patches or even contribute to
 the project (yes, really your PR are welcome!), fork-me and clone it
 to your device:
 ```bash
-$ git clone https://github.com/mbagagli/host host
+$ git clone https://github.com/mbagagli/host-picker host
 $ cd host/
 $ # conda activate myenv (optional)
 $ pip install .
@@ -46,21 +46,20 @@ $ pip install .
 ... et voila'!
 
 ## Additional infos
-Although the package testing is in [Travis-CI](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main), you could still install `pytest` and
-inside the cloned folder type:
+Although the package testing is in [Travis-CI](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=master), you could still install `pytest` and, inside the cloned folder, type:
 ```bash
 $ pytest
 ```
-to check everything is fine
+to check everything is fine.
 
-The package comes with jupyter-notebooks (under `books` subdir) where you
+The package comes with some jupyter-notebooks (under `books` subdir) where you
 can test and understand this picking-algorithm.
 
 ## Citing
 
 If you use this code for your science, please consider citing it in your final results or manuscripts.
 ```
-M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5579271
+M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5579442
 ```
 
 ## Reference
