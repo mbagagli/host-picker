@@ -42,3 +42,8 @@ docs/_build/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# CodCov specific
+*.gcno
+*.gcda
+*.gcov
