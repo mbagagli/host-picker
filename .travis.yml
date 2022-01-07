@@ -1,3 +1,6 @@
+env:
+  global:
+    - CODECOV_TOKEN=afc838ef-b7e6-4f63-a5cd-922982ac8ae7
 language: python
 python:
   - 3.6
@@ -12,6 +15,7 @@ before_install:
   - pip install pytest-cov
 install:
   - pip install ".[test]" . # install package + test dependencies
-script: pytest              # run tests
+script:
+  - pytest --doctest-modules --cov-report=xml --cov=host -v tests/    # run tests
 after_success:
   - codecov # submit coverage
