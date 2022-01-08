@@ -16,7 +16,7 @@ before_install:
 install:
   - pip install ".[test]" . # install package + test dependencies
 script:
-  - pytest --doctest-modules --cov-report=xml --cov=host -v tests/    # run tests
+  - pytest --doctest-modules --cov-report=xml --cov -v tests/   # run tests
 after_success:
   - codecov -t {{CODECOV_TOKEN}}
 #  - codecov --file coverage/lcov.info --disable search
