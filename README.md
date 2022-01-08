@@ -1,5 +1,6 @@
 [![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org/badge/latestdoi/418490530)
 [![Build Status](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=master)](https://app.travis-ci.com/mbagagli/host-picker)
+[![codecov](https://codecov.io/gh/mbagagli/host-picker/branch/master/graph/badge.svg?token=N5CSD8HTHN)](https://codecov.io/gh/mbagagli/host-picker)
 
 # HOST
 
