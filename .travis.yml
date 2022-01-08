@@ -18,6 +18,6 @@ install:
 script:
   - pytest --doctest-modules --cov-report=xml --cov -v tests/   # run tests
 after_success:
-  - codecov -t {{CODECOV_TOKEN}}
+  - codecov -t "${CODECOV_TOKEN}"
 #  - codecov --file coverage/lcov.info --disable search
 #  - codecov # submit coverage
