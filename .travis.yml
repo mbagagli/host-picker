@@ -11,11 +11,12 @@ before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
-  - pip install codecov
+  - pip install --user codecov
   - pip install pytest-cov
 install:
   - pip install ".[test]" . # install package + test dependencies
 script:
   - pytest --doctest-modules --cov-report=xml --cov=host -v tests/    # run tests
 after_success:
-  - codecov # submit coverage
+  - codecov --file coverage/lcov.info --disable search
+#  - codecov # submit coverage
