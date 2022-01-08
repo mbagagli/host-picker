@@ -26,7 +26,7 @@ bibliography: paper.bib
 
 Earthquakes are one of the most devastating natural disasters, and their fast
 and reliable detection is the core-challenge of the so called
-_early-warning systems_ [@nakamura1988, @espinosaaranda1995]. Being able also to precisely measure
+_early-warning systems_ [@nakamura1988 ; @espinosaaranda1995]. Being able also to precisely measure
 the main seismic phases’ arrival times and consistently assess the observation
 error is key to produce reliable hypocenter locations. These hypocenters
 locations are collected to  create seismic catalogs that are important
@@ -48,9 +48,9 @@ success of phase-picking analysis.
 
 Several AP have been developed in the past. There is a widely
 used nomenclature to group these algorithms:
-[i] Energy-based pickers (e.g., @allen1982,  @baer1987),
-[ii] Higher order statistic pickers (e.g., @kuperkoch2010, @baillard2014),
-[iii] Autoregressive pickers (e.g., @maeda1985, @sleeman1999),
+[i] Energy-based pickers (e.g., @allen1982 ;  @baer1987),
+[ii] Higher order statistic pickers (e.g., @kuperkoch2010 ; @baillard2014),
+[iii] Autoregressive pickers (e.g., @maeda1985 ; @sleeman1999),
 [iv] Neural network methods (e.g., @zhu2019),
 
 Every algorithm has its own strengths and weaknesses. Describing them is beyond the scope
@@ -60,7 +60,7 @@ of this paper, but a complete review can be found in @kuperkoch2012.
 
 As the name suggests, the **HOST** package here presented belongs to the
 Higher-Order-Statistic pickers group. It originally took inspiration from the one proposed
-by @baillard2004, although it presents several improvements in terms of
+by @baillard2014, although it presents several improvements in terms of
 usage and customization possibilities.
 
 The package object-oriented nature, deviates from the canonical function-oriented flows
@@ -113,7 +113,7 @@ Once the (optional) CF's transformation stage is done, the CF is then passed to 
 - The `minima` method: this method will simply detect the sample with the lowest value as the correct time-arrival. Although it may seem too simplistic, this method is effective  with simple signal and is the faster among all methods.
 - The `gaussian` method: this approach will consider the first-derivative of the given CF as a gaussian process. It will detect the first sample exceeding a given threshold (based on the distribution's standard deviation) as the correct arrival time.
 
-Another difference with common HOS-based picker is the possibility of a multi-picking and multi-window analysis that the HOST package offers. Because both _skewness_ and _kurtosis_ are calculated with singular, fixed time-windows [@saragiotis2002, @baillard2014], the sensitivity and the precision of such an approach could be lower for complex or emergent onsets. For this reason, the package allows multi-frequency analysis to increase the accuracy and the robustness of the pick definition, by using different time-windows (periods) to estimate multiple CFs.
+Another difference with common HOS-based picker is the possibility of a multi-picking and multi-window analysis that the HOST package offers. Because both _skewness_ and _kurtosis_ are calculated with singular, fixed time-windows [@saragiotis2002 ; @baillard2014], the sensitivity and the precision of such an approach could be lower for complex or emergent onsets. For this reason, the package allows multi-frequency analysis to increase the accuracy and the robustness of the pick definition, by using different time-windows (periods) to estimate multiple CFs.
 
 In case of a multi-frequency approach, each CF (either _skewness_ or _kurtosis_) is transformed and picked the same way as the pipeline indicated by the user. The final pool of observations is then passed to a statistical _triage_ stage where, with a jack-knife approach, it discerns among the _valid_ and _outlier_ observations.
 Once declared the mean of our picks population $\bar{X}$, it computes the mean $\bar{x}_{i}$ and the bias $\bar{X} - \bar{x}_{i}$ for each subsample consisting of all but the $i_{th}$ element (Eq. \autoref{eq:triage}):
@@ -142,65 +142,4 @@ For a complete picking tutorial and customization examples, the reader is referr
 
 I acknowledge the Swiss-AlpArray SINERGIA project `CRSII2_154434/1` by Swiss National Science Foundation (SNSF) for the support of this project.
 
-
 # References
-
-<!-- ##### EDITOR :  [Leonardo Uieda (@leouieda)](https://www.leouieda.com) -->
-
-<!--
-
-### cite
-
- `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
-
-All the features of the package and their usage across different settings are illustrated using
-Jupyter notebooks as hands-on tutorials. I strongly recommend the user to check them out to get use to the
-packages API.One of the requirements for such a package are the well-know seismology library OBSPY() used
-principally for I/O routines
-
-#outlook
-
-I hope this user-friendly yet customizable seismic picker package results useful
-to the community for better detection and dEDEDE.
-
-# Mathematics
-
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
-
-Double dollars make self-standing equations:
-
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
-
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
-
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% } -->
-
