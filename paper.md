@@ -58,14 +58,14 @@ of this paper, but a complete review can be found in @kuperkoch2012.
 
 # Statement of need
 
-As the name suggests, the **HOST** package here presented belongs to the
+As the name suggests, the `host-picker` package here presented belongs to the
 Higher-Order-Statistic pickers group. It originally took inspiration from the one proposed
 by @baillard2014, although it presents several improvements in terms of
 usage and customization possibilities.
 
 The package object-oriented nature, deviates from the canonical function-oriented flows
 found in most picking-algorithms packages, where usually is requested to the user to work in a closed
-and dedicated environment (i.e., with specific formats and pre-defined, fixed workflows)
+and dedicated environment (i.e., with specific formats and pre-defined, fixed workflows).
 
 The `host-picker`, instead, delivers simple API classes that are easily embeddable in
 existent frameworks or routines.
@@ -73,7 +73,7 @@ This package keeps the users as the main builder of its own workflow,
 providing complete and essential tools for their pipelines.
 Considering the complexity of seismic-waveforms, this idea represents an advantage to approach the picking problem.
 As stated before, the AP are necessary  when dealing with
-large  and highly-heterogeneous datasets. The "all-in-one" solutions, in such cases, are not recommended.
+large  and highly-heterogeneous datasets. Usually, the "all-in-one" solutions in such cases are not recommended.
 Rather, one should be able to separate and adapt the workflows for different signal analysis.
 This is the ultimate aim of this library: to ease the creation of customized picking pipelines and help the seismology community meet their picking study needs.
 
