@@ -1,6 +1,6 @@
 env:
   global:
-    - CODECOV_TOKEN=afc838ef-b7e6-4f63-a5cd-922982ac8ae7
+    - CODECOV_TOKEN: "afc838ef-b7e6-4f63-a5cd-922982ac8ae7"
 language: python
 python:
   - 3.6
@@ -18,5 +18,6 @@ install:
 script:
   - pytest --doctest-modules --cov-report=xml --cov=host -v tests/    # run tests
 after_success:
-  - codecov --file coverage/lcov.info --disable search
+  - codecov -t {{CODECOV_TOKEN}}
+#  - codecov --file coverage/lcov.info --disable search
 #  - codecov # submit coverage
