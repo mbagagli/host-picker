@@ -598,6 +598,21 @@ class Host(object):
 
     # ------------- Getter / Setter methods
 
+    def calculate_single_hos(self, tw, shift_origin=True):
+        """ Just to calculate the HOS of a give time-window
+
+            Args:
+                shift_origin (bool): if False will pre-pend N
+                    times the first value of `hos_arr` to reach the
+                    same length of input array. Not recommended when
+                    picking, as it can alter the true onset detection.
+        """
+        hos_arr, N = self._calculate_CF(tw)
+        if not shift_origin:
+            _add_me = np.full(N, hos_arr[0])
+            hos_arr = np.insert(hos_arr, 0, _add_me, axis=0)
+        return hos_arr
+
     def get_picks_UTC(self):
         return self.pickTime_UTC
 
