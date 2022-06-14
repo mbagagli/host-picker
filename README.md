@@ -5,8 +5,8 @@
 # HOST
 
 **Author:** _Matteo Bagagli_
-**Date:** _02/2022_
-**Version:** _2.4.5_
+**Date:** _06/2022_
+**Version:** _2.4.6_
 
 ## What is it?
 The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.

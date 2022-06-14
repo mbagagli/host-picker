@@ -1,19 +1,20 @@
 Metadata-Version: 2.1
 Name: host-picker
-Version: 2.4.3
+Version: 2.4.5
 Summary: High Order STatisics picking algorithms
 Home-page: https://github.com/mbagagli/host-picker
 Author: Matteo Bagagli
 Author-email: matteo.bagagli@erdw.ethz.com
 License: UNKNOWN
 Description: [![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org/badge/latestdoi/418490530)
-        [![Build Status](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main)](https://app.travis-ci.com/mbagagli/host-picker)
+        [![Build Status](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=master)](https://app.travis-ci.com/mbagagli/host-picker)
+        [![codecov](https://codecov.io/gh/mbagagli/host-picker/branch/master/graph/badge.svg?token=N5CSD8HTHN)](https://codecov.io/gh/mbagagli/host-picker)
         
         # HOST
         
         **Author:** _Matteo Bagagli_
-        **Date:** _10/2021_
-        **Version:** _2.4.3_
+        **Date:** _02/2022_
+        **Version:** _2.4.5_
         
         ## What is it?
         The **HOST** acronym stands for **H**igh-**O**rder-**ST**atistics seismic pickers.
@@ -46,7 +47,7 @@ Description: [![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org
         the project (yes, really your PR are welcome!), fork-me and clone it
         to your device:
         ```bash
-        $ git clone https://github.com/mbagagli/host host
+        $ git clone https://github.com/mbagagli/host-picker host
         $ cd host/
         $ # conda activate myenv (optional)
         $ pip install .
@@ -54,21 +55,20 @@ Description: [![DOI](https://zenodo.org/badge/418490530.svg)](https://zenodo.org
         ... et voila'!
         
         ## Additional infos
-        Although the package testing is in [Travis-CI](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=main), you could still install `pytest` and
-        inside the cloned folder type:
+        Although the package testing is in [Travis-CI](https://app.travis-ci.com/mbagagli/host-picker.svg?branch=master), you could still install `pytest` and, inside the cloned folder, type:
         ```bash
         $ pytest
         ```
-        to check everything is fine
+        to check everything is fine.
         
-        The package comes with jupyter-notebooks (under `books` subdir) where you
-        can test and understand this picking-algorithm.
+        The package comes with some jupyter-notebooks (under `books` subdir) where you
+        can test, understand and customize this picking-algorithm.
         
         ## Citing
         
         If you use this code for your science, please consider citing it in your final results or manuscripts.
         ```
-        M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5579271
+        M. Bagagli (2021). mbagagli/host-picker: host-picker. Zenodo. https://doi.org/10.5281/zenodo.5575912.
         ```
         
         ## Reference

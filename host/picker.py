@@ -474,10 +474,13 @@ class Host(object):
         """ Simply return mean and median UTCDateTime of indict
             UTCDateTime obkject. It ignores any keys
         """
-        datearr = [float(_v) for _k, _v in indict.items()]
-        meanUTC = UTCDateTime(np.array(datearr).mean())
-        medianUTC = UTCDateTime(np.median(np.array(datearr)))
-        return meanUTC, medianUTC
+        if len(indict) == 0:
+            return None, None
+        else:
+            datearr = [float(_v) for _k, _v in indict.items()]
+            meanUTC = UTCDateTime(np.array(datearr).mean())
+            medianUTC = UTCDateTime(np.median(np.array(datearr)))
+            return meanUTC, medianUTC
 
     def _pick(self, tw):
         """ Private method extracting picks
