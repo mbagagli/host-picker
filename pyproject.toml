@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "host-picker"                # PyPI name (dashes ok). Example.
+version = "2.4.7"                   # bump each release
+description = "High Order STatisics picking algorithms for time-series analysis"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE.md" }   # or {text="MIT"} if you prefer
+authors = [{ name = "Matteo Bagagli", email = "matteo@earthroverprogram.org" }]
+keywords = ["seismology", "earthquake", "higher-order-statistics", "host",
+            "kurtosis", "skewness"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+]
+
+# If you have runtime deps, list them here instead of requirements.txt
+dependencies = [
+  "numpy>=1.18.1",
+  "matplotlib>=2.1.0",
+  "obspy>=1.1.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/mbagagli/host-picker"
+Repository = "https://github.com/mbagagli/host-picker"
+Issues = "https://github.com/mbagagli/host-picker/issues"
+
+# Tell setuptools how to find packages (your screenshot shows a "host" dir)
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["host*"]
+
+# Include non-Python files inside your package if any (e.g., data files)
+[tool.setuptools.package-data]
+host = ["**/*.txt", "**/*.yaml", "**/*.yml", "**/*.json"]
