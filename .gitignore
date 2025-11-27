@@ -2,6 +2,7 @@
 *.pyc
 __pycache__
 *.log
+RELEASING.md
 
 # Python build artifacts
 build/

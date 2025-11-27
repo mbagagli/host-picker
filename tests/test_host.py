@@ -122,19 +122,36 @@ def test_work_multiwin_kurt_aic():
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
+    # --- v2.4.6 outlier seeks
+    # ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+    #                  '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
+    #                  '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+    #                  '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
+    #                  '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000),
+    #                  'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 676667),
+    #                  'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+    #                  'outlier_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+    #                                  '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000)},
+    #                  'pick_error': 0.029999999999999999,
+    #                  'valid_obs': {'0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
+    #                                '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
+    #                                '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000)}}
+
+    # --- v2.4.7 MAD/Tukey seek outliers (more robust)
     ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
                      '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
                      '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
                      '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000),
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000),
-                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 676667),
-                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
-                     'outlier_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
-                                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000)},
-                     'pick_error': 0.029999999999999999,
-                     'valid_obs': {'0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
+                     'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 682500),
+                     'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 685000),
+                     'outlier_obs': {'0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 630000)},
+                     'pick_error': 0.04,
+                     'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 700000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 690000),
                                    '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 680000),
                                    '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 660000)}}
+
     #
     if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missing some")
@@ -214,6 +231,22 @@ def test_work_multiwin_skew_aic():
     #
     HP.work(debug_plot=False)
     pickTime_UTC = HP.get_picks_UTC()
+    # --- v2.4.6 outlier seeks
+    # ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                  '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
+    #                  '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                  '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                  '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000),
+    #                  'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                  'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                  'outlier_obs': {'0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
+    #                                  '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000)},
+    #                  'pick_error': 0.0,
+    #                  'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                                '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+    #                                '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000)}}
+
+    # --- v2.4.7 MAD/Tukey seek outliers (more robust)
     ref_pick_dict = {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
                      '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
                      '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
@@ -221,12 +254,15 @@ def test_work_multiwin_skew_aic():
                      '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000),
                      'mean': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
                      'median': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                     'outlier_obs': {'0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
-                                     '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000)},
-                     'pick_error': 0.0,
+                     'outlier_obs': {},
+                     'pick_error': 0.02,
                      'valid_obs': {'0.1': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                                   '0.15': UTCDateTime(2009, 8, 24, 0, 20, 7, 740000),
                                    '0.2': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
-                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000)}}
+                                   '0.25': UTCDateTime(2009, 8, 24, 0, 20, 7, 730000),
+                                   '0.3': UTCDateTime(2009, 8, 24, 0, 20, 7, 720000)}}
+
+
     #
     if len(pickTime_UTC.keys()) != 10:
         errors.append("KEY numbers doesn't correspond, missins some")
